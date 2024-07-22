@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "file-reader"
+version = "0.1.0"
+description = ""
+authors = ["Matheus Santiago <matheus.nilo.santiago@gmail.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.10"
+tree-sitter = "*"
+
+tree_sitter_copybook = {path = "/home/wsl/dev/cobol/tree-sitter/tree-sitter-copybook/", develop = true}
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
