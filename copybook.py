@@ -1,15 +1,14 @@
+from os import fspath
 from typing import List
-
-import tree_sitter_copybook as copybook
 from tree_sitter import Language, Node, Parser, Query
 
 
-class CopybookParser:
+class Copybook:
     root: Node
     data_descriptions: list[dict] = None
 
     def __init__(self, copybook_path: str):
-        self.language = Language(copybook.language())
+        self.language = getCopybookLanguage()
         parser = Parser(self.language)
         with open(copybook_path) as cpy:
             source = cpy.read()
@@ -52,7 +51,7 @@ class CopybookParser:
             if _def:
                 data_type = self._assign_data_type(_def, comp)
                 description["data_type"] = data_type
-                description["bytes"] = self.foo(_def, data_type)
+                description["bytes"] = self.calculate_number_of_bytes(_def, data_type)
 
             descriptions.append(description)
 
@@ -107,7 +106,7 @@ class CopybookParser:
 
         return "ch"
 
-    def foo(self, _def: str, dtype: str):
+    def calculate_number_of_bytes(self, _def: str, dtype: str):
         first_char = _def[0]
         bar = _def.replace("V", " ").replace("S", "").replace("-", "").split()
 
@@ -168,3 +167,17 @@ class CopybookParser:
             stack.append(item)
 
         return descriptions
+
+
+from ctypes import c_void_p, cdll
+
+
+def getCopybookLanguage() -> Language:
+    name = "copybook"
+    path = "../cobol/tree-sitter/tree-sitter-copybook/copybook.so"
+    #  ╾──────────────────────────────────────────────────────────────╼
+    lib = cdll.LoadLibrary(fspath(path))
+    language_function = getattr(lib, f"tree_sitter_{name}")
+    language_function.restype = c_void_p
+    language_ptr = language_function()
+    return Language(language_ptr)

@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "file-reader"
+name = "cobol-file-reader"
 version = "0.1.0"
 description = ""
 authors = ["Matheus Santiago <matheus.nilo.santiago@gmail.com>"]
@@ -7,10 +7,8 @@ readme = "README.md"
 package-mode = false
 
 [tool.poetry.dependencies]
-python = "^3.12"
-tree-sitter = "*"
-tree_sitter_copybook = {path = "../tree-sitter/tree-sitter-copybook/", develop = true}
-
+python = ">=3.10"
+tree-sitter = "^0.22.3"
 
 [build-system]
 requires = ["poetry-core"]
