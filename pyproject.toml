@@ -7,10 +7,9 @@ readme = "README.md"
 package-mode = false
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.12"
 tree-sitter = "*"
-
-tree_sitter_copybook = {path = "/home/wsl/dev/cobol/tree-sitter/tree-sitter-copybook/", develop = true}
+tree_sitter_copybook = {path = "../tree-sitter/tree-sitter-copybook/", develop = true}
 
 
 [build-system]

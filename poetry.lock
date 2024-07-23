@@ -56,9 +56,9 @@ core = ["tree-sitter (>=0.21,<1.0)"]
 
 [package.source]
 type = "directory"
-url = "../cobol/tree-sitter/tree-sitter-copybook"
+url = "../tree-sitter/tree-sitter-copybook"
 
 [metadata]
 lock-version = "2.0"
-python-versions = "^3.10"
-content-hash = "b2cd27c0b3fe3fd466739c23bd148b8e4f6b1bd3e8df513eda9e63a434de092b"
+python-versions = "^3.12"
+content-hash = "cbde1e5e812b64de08a5bd0461258c2fd70aa5fab6c4a88c4c68e0cda43da318"
