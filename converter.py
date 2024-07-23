@@ -2,39 +2,41 @@ HighestPositive = "7fffffffffffffffffff"
 
 
 def translate_group(group: dict, line: bytes):
-    curr_byte = 0
     result: list[tuple[str, str]] = []
 
+    curr_byte = 0
     for child in group["children"]:
         name = child["name"]
         offset = child["bytes"]
 
         _bytes = line[curr_byte : curr_byte + offset]
-        content = translate_bytes(_bytes, v["type"])
-
-        curr_byte += offset
+        content = translate_bytes(_bytes, child)
 
         if "FILLER" not in name:
             result.append((name, content))
+
+        curr_byte += offset
+
     return result
 
 
 def translate_bytes(_bytes: bytearray, description):
-    is_filler = description["name"] == "FILLER"
-    has_type = description.get("type") != None
-    if is_filler or not has_type:
-        return
+    # is_filler = description["name"] == "FILLER"
+    # has_type = description.get("type") != None
+    # if is_filler or not has_type:
+    #     return
 
     data_type = description["data_type"]
-    rem_lv = True
 
     # ch: text  - x
     # zd: zoned - 9
     if data_type in ["ch", "zd"]:
         return (
-            _bytes.decode("cp037").replace("\x00", "").rstrip()
-            if rem_lv == True
-            else _bytes.decode("cp037")
+            _bytes.decode("cp037")
+            .replace("\x00", "")
+            .rstrip()
+            # if rem_lv == True
+            # else _bytes.decode("cp037")
         )
 
     #  pd : packed-decimal       :  9 COMP-3

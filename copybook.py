@@ -38,11 +38,11 @@ class CopybookParser:
 
         descriptions = []
         for capture in captures:
-            description = {}
-
-            description["level"] = capture["level"].text.decode("utf-8").upper()
-            description["name"] = capture["name"].text.decode("utf-8").upper()
-
+            description = {
+                "level": capture["level"].text.decode("utf-8").upper(),
+                "name": capture["name"].text.decode("utf-8").upper(),
+                "children": [],
+            }
             if _def := capture.get("def"):
                 _def = _def.text.decode("utf-8").upper()
 
@@ -52,6 +52,7 @@ class CopybookParser:
             if _def:
                 data_type = self._assign_data_type(_def, comp)
                 description["data_type"] = data_type
+                description["bytes"] = self.foo(_def, data_type)
 
             descriptions.append(description)
 
@@ -106,43 +107,64 @@ class CopybookParser:
 
         return "ch"
 
+    def foo(self, _def: str, dtype: str):
+        first_char = _def[0]
+        bar = _def.replace("V", " ").replace("S", "").replace("-", "").split()
+
+        # PIC 999, 9(3), XXX, X(3)...
+        def get_pic_size(arg):
+            if arg.find("(") > 0:
+                return int(arg[arg.find("(") + 1 : arg.find(")")])
+            else:
+                return len(arg)
+
+        length = get_pic_size(bar[0])
+
+        if len(bar) == 2 and first_char != "V":
+            length += get_pic_size(bar[1])
+
+        # Data size in bytes
+        if "pd" in dtype:
+            return int(length / 2) + 1
+
+        if "bi" in dtype:
+            if length < 5:
+                return 2
+            elif length < 10:
+                return 4
+            else:
+                return 8
+        else:
+            if first_char == "-":
+                length += 1
+            return length
+
     def _organize_into_hierarchy(self, crudeDataDefinitions):
         descriptions = []
         stack = []
 
         for item in crudeDataDefinitions:
-            level = item["level"]
-            name = item["name"]
-            dtype = item.get("data_type")
-
-            desc = {
-                "level": level,
-                "name": name,
-                "data_type": dtype,
-                "children": [],
-            }
-
             isStackEmpty = len(stack) == 0
             if isStackEmpty:
-                descriptions.append(desc)
-                stack.append(desc)
+                descriptions.append(item)
+                stack.append(item)
                 continue
 
-            isLevelHigher = level > stack[-1]["level"]
+            isLevelHigher = item["level"] > stack[-1]["level"]
             if isLevelHigher:
-                stack[-1]["children"].append(desc)
-                stack.append(desc)
+                stack[-1]["children"].append(item)
+                stack.append(item)
                 continue
 
-            while len(stack) > 0 and level <= stack[-1]["level"]:
+            while len(stack) > 0 and item["level"] <= stack[-1]["level"]:
                 stack.pop()
 
             if len(stack) > 0:
-                stack[-1]["children"].append(desc)
-                stack.append(desc)
+                stack[-1]["children"].append(item)
+                stack.append(item)
                 continue
 
-            descriptions.append(desc)
-            stack.append(desc)
+            descriptions.append(item)
+            stack.append(item)
 
         return descriptions
