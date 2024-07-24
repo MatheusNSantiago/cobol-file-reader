@@ -21,8 +21,8 @@
            03  ACHSC600-SAIDA.
                05  FILLER                         PIC   X(075).
                05  ACHSC600-ERRO.
-                   07  ACHSC600-CD-RTN            PIC  S9(004)  COMP.
                    07  ACHSC600-CD-SQL            PIC  S9(003)  COMP-3.
+                   07  ACHSC600-CD-RTN            PIC  S9(004)  COMP.
                    07  ACHSC600-MSG-RTN           PIC   X(050).
       *================================================================*
       * 3) Descrição:

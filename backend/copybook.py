@@ -1,11 +1,12 @@
 from os import fspath
 from typing import List
+
 from tree_sitter import Language, Node, Parser, Query
 
 
 class Copybook:
     root: Node
-    data_descriptions: list[dict] = None
+    record_descriptions: list[dict] = None
 
     def __init__(self, copybook_path: str):
         self.language = getCopybookLanguage()
@@ -15,16 +16,16 @@ class Copybook:
             tree = parser.parse(bytes(source, "utf8"))
             self.root = tree.root_node
 
-        self.data_descriptions = self.get_data_descriptions()
+        self.record_descriptions = self.get_record_descriptions()
 
     def get_root_group(self, name: str):
-        for dd in self.data_descriptions:
+        for dd in self.record_descriptions:
             if dd["name"] == name:
                 return dd
 
-    def get_data_descriptions(self):
-        if self.data_descriptions != None:
-            return self.data_descriptions
+    def get_record_descriptions(self):
+        if self.record_descriptions != None:
+            return self.record_descriptions
 
         data_descriptions = self._match("(data_description) @c")
         capture_query = """(data_description
@@ -35,9 +36,9 @@ class Copybook:
                                           comp: (_)? @comp)? )"""
         captures = [self._capture(capture_query, data) for data in data_descriptions]
 
-        descriptions = []
+        records = []
         for capture in captures:
-            description = {
+            record = {
                 "level": capture["level"].text.decode("utf-8").upper(),
                 "name": capture["name"].text.decode("utf-8").upper(),
                 "children": [],
@@ -50,12 +51,32 @@ class Copybook:
 
             if _def:
                 data_type = self._assign_data_type(_def, comp)
-                description["data_type"] = data_type
-                description["bytes"] = self.calculate_number_of_bytes(_def, data_type)
+                record["data_type"] = data_type
+                record["bytes"] = self.calculate_number_of_bytes(_def, data_type)
 
-            descriptions.append(description)
+            record["is_group"] = _def == None
 
-        return self._organize_into_hierarchy(descriptions)
+            records.append(record)
+
+        root_groups = self._organize_into_hierarchy(records)
+        for root in root_groups:
+            self._calculate_group_sizes(root)
+
+        return root_groups
+
+    def get_record_length(self) -> int:
+        last = 0
+        for idx, rec in enumerate(self.record_descriptions):
+            if idx == 0:
+                last = rec["bytes"]
+                continue
+            if rec["bytes"] != last:
+                raise Exception(
+                    f"O grupo {rec["name"]} possui um tamanho diferente dos demais records de mesmo nível.\n"
+                    + f"Tamanho esperado: {last} bytes.\n"
+                    f"Tamanho encontrado: {rec["bytes"]} bytes.\n"
+                )
+        return last
 
     def _match(self, query: str, root: Node | None = None) -> List[Node]:
         query: Query = self.language.query(query)
@@ -138,35 +159,49 @@ class Copybook:
                 length += 1
             return length
 
-    def _organize_into_hierarchy(self, crudeDataDefinitions):
-        descriptions = []
+    def _organize_into_hierarchy(self, records):
+        roots = []
         stack = []
 
-        for item in crudeDataDefinitions:
+        for record in records:
             isStackEmpty = len(stack) == 0
             if isStackEmpty:
-                descriptions.append(item)
-                stack.append(item)
+                roots.append(record)
+                stack.append(record)
                 continue
 
-            isLevelHigher = item["level"] > stack[-1]["level"]
-            if isLevelHigher:
-                stack[-1]["children"].append(item)
-                stack.append(item)
+            isHigherLevel = record["level"] > stack[-1]["level"]
+            if isHigherLevel:
+                stack[-1]["children"].append(record)
+                stack.append(record)
                 continue
 
-            while len(stack) > 0 and item["level"] <= stack[-1]["level"]:
+            # Deixa só definições que são filhas (=level maior) do item atual
+            while len(stack) > 0 and record["level"] <= stack[-1]["level"]:
                 stack.pop()
 
             if len(stack) > 0:
-                stack[-1]["children"].append(item)
-                stack.append(item)
+                parent = stack[-1]
+                parent["children"].append(record)
+                stack.append(record)
                 continue
 
-            descriptions.append(item)
-            stack.append(item)
+            roots.append(record)
+            stack.append(record)
 
-        return descriptions
+        return roots
+
+    def _calculate_group_sizes(self, root):
+        if not root["is_group"]:
+            return root["bytes"]
+
+        root["bytes"] = 0
+
+        for child in root["children"]:
+            nbytes = self._calculate_group_sizes(child)
+            root["bytes"] += nbytes
+
+        return root["bytes"]
 
 
 from ctypes import c_void_p, cdll
@@ -174,7 +209,8 @@ from ctypes import c_void_p, cdll
 
 def getCopybookLanguage() -> Language:
     name = "copybook"
-    path = "../cobol/tree-sitter/tree-sitter-copybook/copybook.so"
+    path = "../tree-sitter/tree-sitter-copybook/copybook.so"
+    # path = "../cobol/tree-sitter/tree-sitter-copybook/copybook.so"
     #  ╾──────────────────────────────────────────────────────────────╼
     lib = cdll.LoadLibrary(fspath(path))
     language_function = getattr(lib, f"tree_sitter_{name}")
