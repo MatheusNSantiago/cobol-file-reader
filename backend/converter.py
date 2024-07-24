@@ -1,7 +1,17 @@
 HighestPositive = "7fffffffffffffffffff"
 
 
-def translate_group(group: dict, line: bytes):
+def translate_group(group: dict, line: bytes) -> list[tuple[str, str]]:
+    """
+    Transforma uma linha de bytes em campos legíveis seguindo a estrutura descrita no grupo
+
+    Parâmetros:
+    group (dict): Representa a estrutura do grupo.
+    line (bytes): Linha de bytes a ser traduzida.
+
+    Retorna:
+    list[tuple[str, str]]: Uma lista de tuplas contendo o nome de cada campo e seu conteúdo traduzido.
+    """
     result: list[tuple[str, str]] = []
 
     curr_byte = 0
@@ -21,23 +31,12 @@ def translate_group(group: dict, line: bytes):
 
 
 def translate_bytes(_bytes: bytearray, description):
-    # is_filler = description["name"] == "FILLER"
-    # has_type = description.get("type") != None
-    # if is_filler or not has_type:
-    #     return
-
     data_type = description["data_type"]
 
     # ch: text  - x
     # zd: zoned - 9
     if data_type in ["ch", "zd"]:
-        return (
-            _bytes.decode("cp037")
-            .replace("\x00", "")
-            .rstrip()
-            # if rem_lv == True
-            # else _bytes.decode("cp037")
-        )
+        return _bytes.decode("cp037").replace("\x00", "").rstrip()
 
     #  pd : packed-decimal       :  9 COMP-3
     #  pd+: signed packed-decimal: S9 COMP-3
@@ -52,9 +51,6 @@ def translate_bytes(_bytes: bytearray, description):
         unsigned_value = _bytes.hex()[:-1]
 
         return sign + unsigned_value
-        # return (
-        # "" if _bytes.hex()[-1:] != "d" and _bytes.hex()[-1:] != "b" else "-"
-        # ) + _bytes.hex()[:-1]
 
     #  bi : binary       :  9 COMP
     #  bi+: signed binary: S9 COMP

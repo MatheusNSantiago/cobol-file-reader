@@ -7,9 +7,10 @@ from tree_sitter import Language, Node, Parser, Query
 class Copybook:
     root: Node
     record_descriptions: list[dict] = None
+    _parser_path = "../../cobol/tree-sitter/tree-sitter-copybook/copybook.so"
 
     def __init__(self, copybook_path: str):
-        self.language = getCopybookLanguage()
+        self.language = self._getLanguage()
         parser = Parser(self.language)
         with open(copybook_path) as cpy:
             source = cpy.read()
@@ -72,9 +73,9 @@ class Copybook:
                 continue
             if rec["bytes"] != last:
                 raise Exception(
-                    f"O grupo {rec["name"]} possui um tamanho diferente dos demais records de mesmo nível.\n"
+                    f"O grupo {rec['name']} possui um tamanho diferente dos demais records de mesmo nível.\n"
                     + f"Tamanho esperado: {last} bytes.\n"
-                    f"Tamanho encontrado: {rec["bytes"]} bytes.\n"
+                    f"Tamanho encontrado: {rec['bytes']} bytes.\n"
                 )
         return last
 
@@ -203,17 +204,14 @@ class Copybook:
 
         return root["bytes"]
 
+    def _getLanguage(self ) -> Language:
+        from ctypes import c_void_p, cdll
 
-from ctypes import c_void_p, cdll
-
-
-def getCopybookLanguage() -> Language:
-    name = "copybook"
-    path = "../tree-sitter/tree-sitter-copybook/copybook.so"
-    # path = "../cobol/tree-sitter/tree-sitter-copybook/copybook.so"
-    #  ╾──────────────────────────────────────────────────────────────╼
-    lib = cdll.LoadLibrary(fspath(path))
-    language_function = getattr(lib, f"tree_sitter_{name}")
-    language_function.restype = c_void_p
-    language_ptr = language_function()
-    return Language(language_ptr)
+        name = "copybook"
+        # path = "../cobol/tree-sitter/tree-sitter-copybook/copybook.so"
+        #  ╾──────────────────────────────────────────────────────────────╼
+        lib = cdll.LoadLibrary(fspath(self._parser_path))
+        language_function = getattr(lib, f"tree_sitter_{name}")
+        language_function.restype = c_void_p
+        language_ptr = language_function()
+        return Language(language_ptr)
