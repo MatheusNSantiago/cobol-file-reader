@@ -1,7 +1,9 @@
+from typing import Any
+
 HighestPositive = "7fffffffffffffffffff"
 
 
-def translate_group(group: dict, line: bytes) -> list[tuple[str, str]]:
+def translate_group(group: dict, line: bytes) -> dict[str, Any]:
     """
     Transforma uma linha de bytes em campos legíveis seguindo a estrutura descrita no grupo
 
@@ -10,9 +12,9 @@ def translate_group(group: dict, line: bytes) -> list[tuple[str, str]]:
     line (bytes): Linha de bytes a ser traduzida.
 
     Retorna:
-    list[tuple[str, str]]: Uma lista de tuplas contendo o nome de cada campo e seu conteúdo traduzido.
+    dict[str, str]]: Nome dos campo e seu conteúdo traduzido.
     """
-    result: list[tuple[str, str]] = []
+    result: dict[str, Any] = {}
 
     curr_byte = 0
     for child in group["children"]:
@@ -23,7 +25,7 @@ def translate_group(group: dict, line: bytes) -> list[tuple[str, str]]:
         content = translate_bytes(_bytes, child)
 
         if "FILLER" not in name:
-            result.append((name, content))
+            result[name] = content
 
         curr_byte += offset
 

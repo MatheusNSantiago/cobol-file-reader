@@ -9,6 +9,10 @@ package-mode = false
 [tool.poetry.dependencies]
 python = ">=3.10"
 tree-sitter = "^0.22.3"
+fastapi = "^0.111.1"
+duckdb = "^1.0.0"
+pandas = "^2.2.2"
+fastparquet = "^2024.5.0"
 
 [build-system]
 requires = ["poetry-core"]
