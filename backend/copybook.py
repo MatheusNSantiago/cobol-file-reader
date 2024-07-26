@@ -7,8 +7,8 @@ from tree_sitter import Language, Node, Parser, Query
 class Copybook:
     root: Node
     record_descriptions: list[dict] = None
-    _parser_path = "../../tree-sitter/tree-sitter-copybook/copybook.so" # linux
-    # _parser_path = "../../cobol/tree-sitter/tree-sitter-copybook/copybook.so" # wsl
+    # _parser_path = "../../tree-sitter/tree-sitter-copybook/copybook.so" # linux
+    _parser_path = "../../cobol/tree-sitter/tree-sitter-copybook/copybook.so"  # wsl
 
     def __init__(self, copybook_path: str):
         self.language = self._getLanguage()
@@ -24,6 +24,9 @@ class Copybook:
         for dd in self.record_descriptions:
             if dd["name"] == name:
                 return dd
+
+    def get_root_groups(self):
+        return self.record_descriptions
 
     def get_record_descriptions(self):
         if self.record_descriptions != None:
@@ -65,6 +68,20 @@ class Copybook:
             self._calculate_group_sizes(root)
 
         return root_groups
+
+    def get_leaf_records_for_group(self, name):
+        group = self.get_root_group(name)
+
+        def get_leaf_records_recursive(node):
+            if not node["children"] and node["name"] != "FILLER":
+                return [node]
+
+            leaf_records = []
+            for child in node["children"]:
+                leaf_records.extend(get_leaf_records_recursive(child))
+            return leaf_records
+
+        return get_leaf_records_recursive(group)
 
     def get_record_length(self) -> int:
         last = 0
@@ -205,7 +222,7 @@ class Copybook:
 
         return root["bytes"]
 
-    def _getLanguage(self ) -> Language:
+    def _getLanguage(self) -> Language:
         from ctypes import c_void_p, cdll
 
         name = "copybook"

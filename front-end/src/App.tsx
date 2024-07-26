@@ -1,27 +1,19 @@
 import { MRT_Localization_PT_BR } from "material-react-table/locales/pt-BR";
-import useTableData from "./hooks/useTableData";
+import useGetTableInfo from "./hooks/useTableData";
+import { MaterialReactTable } from "material-react-table";
 import {
-  MaterialReactTable,
-  MRT_ToggleFiltersButton,
-} from "material-react-table";
-import { Box, lighten } from "@mui/material";
-
-export type Employee = {
-  firstName: string;
-  lastName: string;
-  email: string;
-  jobTitle: string;
-  salary: number;
-  startDate: string;
-  signatureCatchPhrase: string;
-  avatar: string;
-};
+  Box,
+  Divider,
+  FormControl,
+  MenuItem,
+  Select,
+} from "@mui/material";
 
 const App = () => {
-  const { isLoading, table } = useTableData();
+  const { isLoading, table } = useGetTableInfo();
 
   return (
-    <body style={{ overflowY: "hidden", height: "100vh" }}>
+    <div style={{ overflowY: "hidden", height: "100vh" }}>
       <MaterialReactTable
         columns={table.columns}
         data={table.data} //data must be memoized or stable (useState, useMemo, defined outside of this component, etc.)
@@ -32,25 +24,20 @@ const App = () => {
           showColumnFilters: true,
         }}
         enablePagination={false}
-        renderTopToolbar={({ table }) => {
+        renderTopToolbar={() => {
           return (
             <Box
-              sx={({ palette }) => ({
-                backgroundColor: lighten(palette.background.default, 0.05),
+              sx={{
                 display: "flex",
-                gap: "0.5rem",
+                borderRadius: 2,
+                gap: "2rem",
                 mx: 20,
                 p: "8px",
-                justifyContent: "space-between",
-              })}
+              }}
             >
               <h2>BRT.DEB.DEB1122.D240118.D310.SS000110</h2>
-              <Box
-                sx={{ display: "flex", gap: "0.5rem", alignItems: "center" }}
-              >
-                <MRT_ToggleFiltersButton table={table} />
-                <MRT_ToggleFiltersButton table={table} />
-              </Box>
+              <Divider orientation="vertical" variant="middle" flexItem />
+              <MultipleSelect />
             </Box>
           );
         }}
@@ -71,8 +58,29 @@ const App = () => {
           sx: { border: "1px solid rgba(81, 81, 81, .5)" },
         }}
       />
-    </body>
+    </div>
   );
 };
 
 export default App;
+
+import * as React from "react";
+
+function MultipleSelect() {
+  return (
+    <Box sx={{ minWidth: 120 }}>
+      <FormControl fullWidth>
+        <Select
+          labelId="demo-simple-select-label"
+          id="demo-simple-select"
+          value={age}
+          // onChange={handleChange}
+        >
+          <MenuItem value={10}>Ten</MenuItem>
+          <MenuItem value={20}>Twenty</MenuItem>
+          <MenuItem value={30}>Thirty</MenuItem>
+        </Select>
+      </FormControl>
+    </Box>
+  );
+}

@@ -17,13 +17,38 @@ app.add_middleware(
 
 
 @app.get("/")
-def read_root():
+@app.get("/{file}")
+def read_root(file: str ):
     copybook = Copybook("./sample-data/copybooks/DEBK1122.cpy")
-    det_group = copybook.get_root_group("DEB1122-REG-DETALHE")
 
-    rec_length = copybook.get_record_length()
-    with open("./sample-data/files/BRT.DEB.DEB1122.D240118.D310.SS000110", "rb") as f:
+    file = "BRT.DEB.DEB1122.D240118.D310.SS000110"
+
+    with open(f"./sample-data/files/{file}", "rb") as f:
+        rec_length = copybook.get_record_length()
         lines = [line for line in iter(lambda: f.read(rec_length), b"\n")]
 
-    df = pd.DataFrame([translate_group(det_group, line) for line in lines])
-    return df.to_json(index=False, orient="split")
+    groups = []
+    for root in copybook.get_root_groups():
+        is_reg_geral = len(root["children"]) == 0
+        if is_reg_geral:
+            continue
+
+        name = root["name"]
+        columns = [r["name"] for r in copybook.get_leaf_records_for_group(name)]
+
+        translated_records = [translate_group(root, line) for line in lines][:10]
+
+        rows = []
+        for rec in translated_records:
+            values = [rec[col] for col in columns]
+            rows.append(values)
+
+        group = {
+            "name": name,
+            "columns": columns,
+            "rows": rows,
+        }
+
+        groups.append(group)
+
+    return {"file": file, "groups": groups}
