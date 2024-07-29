@@ -5,12 +5,15 @@ type TableData = {
   [key: string]: string;
 };
 
-type TableQueryResponse = {
+type TableGroup = {
   data: TableData[];
   columns: MRT_ColumnDef<TableData>[];
 };
+export type TableQueryResponse = {
+  [name: string]: TableGroup;
+};
 
-type TableDataResponse = {
+export type TableDataResponse = {
   groups: GroupData[];
 };
 
@@ -20,13 +23,9 @@ type GroupData = {
   rows: string[];
 };
 
-const useGetTableInfo = (
-  file: string,
-  copybook: string,
-  groupName?: string,
-) => {
+const useGetTableData = (file: string, copybook: string) => {
   const {
-    data: { data = [], columns = [] } = {},
+    data = {},
     isLoading,
     refetch,
   } = useQuery<TableQueryResponse>({
@@ -36,42 +35,31 @@ const useGetTableInfo = (
         `http://127.0.0.1:8000/?file=${file}&copybook=${copybook}`,
       );
 
-      const response = await fetch(fetchURL.href);
-      const { groups } = (await response.json()) as TableDataResponse;
+      const res = await fetch(fetchURL.href);
+      const { groups } = (await res.json()) as TableDataResponse;
 
-      const group = groups.find(({ name }) => name === (groupName ?? name));
-      if (!group) throw Error(`Grupo ${groupName} não existe`);
-
-      // Desfaz o json comprimido
-      const data: TableData[] = [];
-      for (const row of group.rows) {
-
-        const record: TableData = {};
-        for (let j = 0; j < row.length; j++) {
-          const column = group.columns[j];
-          record[column] = row[j];
-        }
-        data.push(record);
+      const response: TableQueryResponse = {};
+      for (const { name, rows, columns } of groups) {
+        response[name] = {
+          data: rows.map((row) =>
+            columns.reduce(
+              (record, column, j) => ({ ...record, [column]: row[j] }),
+              {},
+            ),
+          ),
+          columns: columns.map((column) => ({
+            header: column,
+            accessorKey: column,
+            muiFilterTextFieldProps: () => ({ helperText: "" }),
+          })),
+        };
       }
-
-      const columns: MRT_ColumnDef<TableData>[] = Object.keys(data).map(
-        (col) => ({
-          header: col,
-          accessorKey: col,
-          muiFilterTextFieldProps: () => ({ helperText: "" }),
-        }),
-      );
-
-      return { data, columns };
+      return response;
     },
     placeholderData: keepPreviousData,
   });
 
-  return {
-    table: { data, columns },
-    isLoading,
-    refetch,
-  };
+  return { data, isLoading, refetch };
 };
 
-export default useGetTableInfo;
+export default useGetTableData;

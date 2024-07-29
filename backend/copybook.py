@@ -7,8 +7,8 @@ from tree_sitter import Language, Node, Parser, Query
 class Copybook:
     root: Node
     record_descriptions: list[dict] = None
-    _parser_path = "../../tree-sitter/tree-sitter-copybook/copybook.so" # linux
-    # _parser_path = "../../cobol/tree-sitter/tree-sitter-copybook/copybook.so"  # wsl
+    # _parser_path = "../../tree-sitter/tree-sitter-copybook/copybook.so" # linux
+    _parser_path = "../../cobol/tree-sitter/tree-sitter-copybook/copybook.so"  # wsl
 
     def __init__(self, copybook_path: str):
         self.language = self._getLanguage()
