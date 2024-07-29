@@ -10,19 +10,21 @@ type TableQueryResponse = {
   columns: MRT_ColumnDef<TableData>[];
 };
 
-
-type GetTableDataResponse = {
-  file: string;
-  columns: string[]
-  groupNames: string[];
+type TableDataResponse = {
+  groups: GroupData[];
 };
 
-type GetGroupData = {
+type GroupData = {
   name: string;
+  columns: string[];
   rows: string[];
 };
 
-const useGetTableInfo = (file: string) => {
+const useGetTableInfo = (
+  file: string,
+  copybook: string,
+  groupName?: string,
+) => {
   const {
     data: { data = [], columns = [] } = {},
     isLoading,
@@ -30,32 +32,35 @@ const useGetTableInfo = (file: string) => {
   } = useQuery<TableQueryResponse>({
     queryKey: ["table-data"],
     queryFn: async () => {
-      const fetchURL = new URL(`http://127.0.0.1:8000/${file}`);
+      const fetchURL = new URL(
+        `http://127.0.0.1:8000/?file=${file}&copybook=${copybook}`,
+      );
 
-      //use whatever fetch library you want, fetch, axios, etc
       const response = await fetch(fetchURL.href);
-      const { file, groups } = JSON.parse(
-        await response.json(),
-      ) as GetTableDataResponse;
+      const { groups } = (await response.json()) as TableDataResponse;
+
+      const group = groups.find(({ name }) => name === (groupName ?? name));
+      if (!group) throw Error(`Grupo ${groupName} não existe`);
 
       // Desfaz o json comprimido
-      // const data: { [key: string]: string }[] = [];
-      // for (let i = 0; i < json.data.length; i++) {
-      //   const values = json.data[i];
-      //   const record: { [key: string]: string } = {};
-      //
-      //   for (let i = 0; i < values.length; i++) {
-      //     const column = json.columns[i];
-      //     record[column] = values[i];
-      //   }
-      //   data.push(record);
-      // }
+      const data: TableData[] = [];
+      for (const row of group.rows) {
 
-      // const columns: MRT_ColumnDef<TableData>[] = groups.map(({columns}). => ({
-      //   header: col,
-      //   accessorKey: col,
-      //   muiFilterTextFieldProps: () => ({ helperText: "" }),
-      // }));
+        const record: TableData = {};
+        for (let j = 0; j < row.length; j++) {
+          const column = group.columns[j];
+          record[column] = row[j];
+        }
+        data.push(record);
+      }
+
+      const columns: MRT_ColumnDef<TableData>[] = Object.keys(data).map(
+        (col) => ({
+          header: col,
+          accessorKey: col,
+          muiFilterTextFieldProps: () => ({ helperText: "" }),
+        }),
+      );
 
       return { data, columns };
     },
@@ -65,6 +70,7 @@ const useGetTableInfo = (file: string) => {
   return {
     table: { data, columns },
     isLoading,
+    refetch,
   };
 };
 

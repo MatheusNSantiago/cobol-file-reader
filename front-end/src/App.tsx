@@ -1,16 +1,12 @@
 import { MRT_Localization_PT_BR } from "material-react-table/locales/pt-BR";
 import useGetTableInfo from "./hooks/useTableData";
 import { MaterialReactTable } from "material-react-table";
-import {
-  Box,
-  Divider,
-  FormControl,
-  MenuItem,
-  Select,
-} from "@mui/material";
+import { Box, Divider, FormControl, MenuItem, Select } from "@mui/material";
 
 const App = () => {
-  const { isLoading, table } = useGetTableInfo();
+  const file = "BRT.DEB.DEB1122.D240118.D310.SS000110";
+  const copybook = "DEBK1122";
+  const { isLoading, table } = useGetTableInfo(file, copybook);
 
   return (
     <div style={{ overflowY: "hidden", height: "100vh" }}>
@@ -64,8 +60,6 @@ const App = () => {
 
 export default App;
 
-import * as React from "react";
-
 function MultipleSelect() {
   return (
     <Box sx={{ minWidth: 120 }}>
@@ -73,8 +67,8 @@ function MultipleSelect() {
         <Select
           labelId="demo-simple-select-label"
           id="demo-simple-select"
-          value={age}
-          // onChange={handleChange}
+          // value={age}
+        // onChange={handleChange}
         >
           <MenuItem value={10}>Ten</MenuItem>
           <MenuItem value={20}>Twenty</MenuItem>

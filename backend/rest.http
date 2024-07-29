@@ -1,0 +1,6 @@
+@copybook=DEBK1122
+@file=BRT.DEB.DEB1122.D240118.D310.SS000110
+
+GET http://127.0.0.1:8000/?file={{file}}&copybook={{copybook}}
+###
+

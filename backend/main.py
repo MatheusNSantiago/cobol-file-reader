@@ -17,11 +17,9 @@ app.add_middleware(
 
 
 @app.get("/")
-@app.get("/{file}")
-def read_root(file: str ):
-    copybook = Copybook("./sample-data/copybooks/DEBK1122.cpy")
-
-    file = "BRT.DEB.DEB1122.D240118.D310.SS000110"
+def read_root(file: str, copybook: str):
+    copybook_path = f"./sample-data/copybook/{copybook}.cpy"
+    copybook: Copybook = Copybook(copybook_path)
 
     with open(f"./sample-data/files/{file}", "rb") as f:
         rec_length = copybook.get_record_length()
@@ -43,12 +41,7 @@ def read_root(file: str ):
             values = [rec[col] for col in columns]
             rows.append(values)
 
-        group = {
-            "name": name,
-            "columns": columns,
-            "rows": rows,
-        }
-
+        group = {"name": name, "columns": columns, "rows": rows}
         groups.append(group)
 
-    return {"file": file, "groups": groups}
+    return {"groups": groups}
