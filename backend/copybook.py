@@ -7,8 +7,8 @@ from tree_sitter import Language, Node, Parser, Query
 class Copybook:
     root: Node
     record_descriptions: list[dict] = None
-    # _parser_path = "../../tree-sitter/tree-sitter-copybook/copybook.so" # linux
-    _parser_path = "../../cobol/tree-sitter/tree-sitter-copybook/copybook.so"  # wsl
+    _parser_path = "../../tree-sitter/tree-sitter-copybook/copybook.so"  # linux
+    # _parser_path = "../../cobol/tree-sitter/tree-sitter-copybook/copybook.so"  # wsl
 
     def __init__(self, copybook_path: str):
         self.language = self._getLanguage()
@@ -36,6 +36,7 @@ class Copybook:
         capture_query = """(data_description
                                level: (_) @level
                                name:  (_) @name
+                               redefines: (_)? @redefines
                                type:  (type
                                           def:  (_) @def
                                           comp: (_)? @comp)? )"""
@@ -54,6 +55,9 @@ class Copybook:
             if comp := capture.get("comp"):
                 comp = comp.text.decode("utf-8").upper()
 
+            if redefines := capture.get("redefines"):
+                record["redefines"] = redefines.text.decode("utf-8").upper()
+
             if _def:
                 data_type = self._assign_data_type(_def, comp)
                 record["data_type"] = data_type
@@ -69,9 +73,7 @@ class Copybook:
 
         return root_groups
 
-    def get_leaf_records_for_group(self, name):
-        group = self.get_root_group(name)
-
+    def get_leaf_records_for_group(self, group):
         def get_leaf_records_recursive(node):
             if not node["children"] and node["name"] != "FILLER":
                 return [node]
@@ -83,19 +85,10 @@ class Copybook:
 
         return get_leaf_records_recursive(group)
 
-    def get_record_length(self) -> int:
-        last = 0
-        for idx, rec in enumerate(self.record_descriptions):
-            if idx == 0:
-                last = rec["bytes"]
-                continue
-            if rec["bytes"] != last:
-                raise Exception(
-                    f"O grupo {rec['name']} possui um tamanho diferente dos demais records de mesmo nível.\n"
-                    + f"Tamanho esperado: {last} bytes.\n"
-                    f"Tamanho encontrado: {rec['bytes']} bytes.\n"
-                )
-        return last
+    def get_group_size(self, group_name: str) -> int:
+        for rec in self.record_descriptions:
+            if rec["name"] == group_name:
+                return rec["bytes"]
 
     def _match(self, query: str, root: Node | None = None) -> List[Node]:
         query: Query = self.language.query(query)

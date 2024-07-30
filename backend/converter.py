@@ -3,7 +3,7 @@ from typing import Any
 HighestPositive = "7fffffffffffffffffff"
 
 
-def translate_group(group: dict, line: bytes) -> dict[str, Any]:
+def extract_record(group: dict, line: bytes) -> dict[str, Any]:
     """
     Transforma uma linha de bytes em campos legíveis seguindo a estrutura descrita no grupo
 
@@ -59,13 +59,13 @@ def translate_bytes(_bytes: bytearray, description):
     if data_type == "bi" or (
         data_type == "bi+" and _bytes.hex() <= HighestPositive[: len(_bytes) * 2]
     ):
-        return str(int("0x" + _bytes.hex(), 0))
+        hex_str = "0x" + _bytes.hex() if _bytes else "0x0"
+        return str(int(hex_str, 0))
 
     # bi+: signed binary: S9 COMP
     if data_type == "bi+":
-        return str(
-            int("0x" + _bytes.hex(), 0) - int("0x" + len(_bytes) * 2 * "f", 0) - 1
-        )
+        hex_str = "0x" + _bytes.hex() if _bytes else "0x0"
+        return str(int(hex_str, 0) - int("0x" + len(_bytes) * 2 * "f", 0) - 1)
 
     # zd+: signed zoned: S9
     if data_type == "zd+":

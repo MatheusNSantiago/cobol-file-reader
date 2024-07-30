@@ -12,36 +12,41 @@ import SelectGroup from "./components/selectGroup";
 import { useElementSize } from "./hooks/useElementSize";
 
 const App = () => {
-  const [group, setGroup] = useState("");
+  const [group, setGroup] = useState("DCLTDEB307");
   const [groups, setGroups] = useState<string[]>([]);
+  const [columnVisibility, setColumnVisibility] = useState({});
 
-  const file = "BRT.DEB.DEB1122.D240118.D310.SS000110";
-  const copybook = "DEBK1122";
+  const file = "BRT.DEB.DEB307.BAIXA.SS000101";
+  const copybook = "DEBK307";
+  const { isLoading, table } = useGetTableData(group, file, copybook);
 
-  const { isLoading, data } = useGetTableData(file, copybook);
-  useEffect(() => {
-    const groups = Object.keys(data);
-    setGroup(groups[0]);
-    setGroups(groups);
-  }, [data]);
+  // useEffect(() => {
+  //   const groups = Object.keys(data);
+  //   setGroup(groups[0]);
+  //   setGroups(groups);
+  // }, [data]);
 
   const { ref, height } = useElementSize();
   const MRTable = useMaterialReactTable({
-    columns: data[group]?.columns ?? [],
-    data: data[group]?.data ?? [],
+    columns: table.columns,
+    data: table.data,
     localization: MRT_Localization_PT_BR,
     enableColumnFilterModes: true,
     initialState: {
       density: "compact",
       showColumnFilters: true,
+      columnVisibility,
     },
-    enablePagination: false,
     enableTopToolbar: false,
-    enableBottomToolbar: false,
+    enableBottomToolbar: true,
+
     enableDensityToggle: false,
     enableFullScreenToggle: false,
-    enableRowVirtualization: true,
+    // enablePagination: false,
+    // enableRowVirtualization: true,
+    enableColumnVirtualization: true,
     enableRowNumbers: true,
+
     state: { isLoading },
     muiTableContainerProps: {
       sx: { px: 20, height: window.innerHeight - height },
@@ -50,6 +55,17 @@ const App = () => {
       sx: { border: "1px solid rgba(81, 81, 81, .5)" },
     },
   });
+
+  useEffect(() => {
+    if (table.columns.length > 12) {
+      const hideColumns = table.columns.reduce(
+        (obj, { header }) => ({ ...obj, [header]: false }),
+        {},
+      );
+
+      MRTable.setColumnVisibility(hideColumns);
+    }
+  }, [table.columns]);
 
   return (
     <Box display="flex" flexDirection="column">

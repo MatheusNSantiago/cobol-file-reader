@@ -5,61 +5,84 @@ type TableData = {
   [key: string]: string;
 };
 
-type TableGroup = {
+export type GetTableDataResponse = {
   data: TableData[];
   columns: MRT_ColumnDef<TableData>[];
 };
-export type TableQueryResponse = {
-  [name: string]: TableGroup;
-};
 
-export type TableDataResponse = {
-  groups: GroupData[];
-};
+// export type TableDataResponse = {
+//   columns: string[];
+//   rows: string[][];
+// };
 
-type GroupData = {
-  name: string;
-  columns: string[];
-  rows: string[];
-};
+// type GroupData = {
+//   name: string;
+//   columns: string[];
+//   rows: string[];
+// };
 
-const useGetTableData = (file: string, copybook: string) => {
+const useGetTableData = (groupName: string, file: string, copybook: string) => {
   const {
-    data = {},
+    data: { columns = [], data = [] } = {},
     isLoading,
     refetch,
-  } = useQuery<TableQueryResponse>({
+  } = useQuery<GetTableDataResponse>({
     queryKey: ["table-data"],
     queryFn: async () => {
       const fetchURL = new URL(
-        `http://127.0.0.1:8000/?file=${file}&copybook=${copybook}`,
+        `http://127.0.0.1:8000/?group_name=${groupName}&file=${file}&copybook=${copybook}`,
       );
 
       const res = await fetch(fetchURL.href);
-      const { groups } = (await res.json()) as TableDataResponse;
+      const { columns, rows } = (await res.json()) as {
+        columns: string[];
+        rows: string[][];
+      };
 
-      const response: TableQueryResponse = {};
-      for (const { name, rows, columns } of groups) {
-        response[name] = {
-          data: rows.map((row) =>
-            columns.reduce(
-              (record, column, j) => ({ ...record, [column]: row[j] }),
-              {},
-            ),
+
+      console.log(columns);
+
+
+      return {
+        columns: columns.map((column) => ({
+          header: column,
+          accessorKey: column,
+          muiFilterTextFieldProps: () => ({ helperText: "" }),
+        })),
+        data: rows.map((row) =>
+          columns.reduce(
+            (record, column, j) => ({ ...record, [column]: row[j] }),
+            {},
           ),
-          columns: columns.map((column) => ({
-            header: column,
-            accessorKey: column,
-            muiFilterTextFieldProps: () => ({ helperText: "" }),
-          })),
-        };
-      }
-      return response;
+        ),
+      };
+
+      // ╾───────────────────────────────────────────────────────────────────────────────────╼
+      // for (const { name, rows, columns } of groups) {
+      //   response[name] = {
+      //     data: rows.map((row) =>
+      //       columns.reduce(
+      //         (record, column, j) => ({ ...record, [column]: row[j] }),
+      //         {},
+      //       ),
+      //     ),
+      //     columns: columns.map((column) => ({
+      //       header: column,
+      //       accessorKey: column,
+      //       muiFilterTextFieldProps: () => ({ helperText: "" }),
+      //     })),
+      //   };
+      // }
+      // return response;
     },
     placeholderData: keepPreviousData,
   });
 
-  return { data, isLoading, refetch };
+  return {
+    table: { columns, data },
+    isLoading,
+    refetch,
+  };
 };
 
 export default useGetTableData;
