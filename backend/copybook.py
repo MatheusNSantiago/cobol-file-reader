@@ -7,8 +7,8 @@ from tree_sitter import Language, Node, Parser, Query
 class Copybook:
     root: Node
     record_descriptions: list[dict] = None
-    _parser_path = "../../tree-sitter/tree-sitter-copybook/copybook.so"  # linux
-    # _parser_path = "../../cobol/tree-sitter/tree-sitter-copybook/copybook.so"  # wsl
+    # _parser_path = "../../tree-sitter/tree-sitter-copybook/copybook.so"  # linux
+    _parser_path = "../../cobol/tree-sitter/tree-sitter-copybook/copybook.so"  # wsl
 
     def __init__(self, copybook_path: str):
         self.language = self._getLanguage()
@@ -75,7 +75,16 @@ class Copybook:
 
     def get_leaf_records_for_group(self, group):
         def get_leaf_records_recursive(node):
-            if not node["children"] and node["name"] != "FILLER":
+            is_filler = node["name"] == "FILLER"
+
+            has_children = node["children"]
+            if has_children:
+                children_are_n88 = True
+                for child in node["children"]:
+                    if child["level"] != "88":
+                        children_are_n88 = False
+
+            if not is_filler and not (has_children and not children_are_n88) :
                 return [node]
 
             leaf_records = []

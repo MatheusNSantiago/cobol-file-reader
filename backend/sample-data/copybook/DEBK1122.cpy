@@ -19,7 +19,9 @@
 000112 01  DEB1122-REG-TRAILER REDEFINES  DEB1122-REG-GERAL.
 000113     03 FILLER                   PIC  X(08).
 000114     03 DEB1122-QT-REG-DET       PIC S9(09)     COMP-3.
-000115*
+
+000107 01  FILLER REDEFINES  DEB1122-REG-GERAL.
+000114     03 DEB1122-QT-REG-DET       PIC S9(09)     COMP-3.
 000160******************************************************************
 000161*                                                                *
 000162* DESCRICAO DOS CAMPOS:                                          *
