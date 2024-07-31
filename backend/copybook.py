@@ -1,36 +1,51 @@
-from os import fspath
 from typing import List
 
 from tree_sitter import Language, Node, Parser, Query
+from tree_sitter_copybook import language
 
 
 class Copybook:
     root: Node
-    record_descriptions: list[dict] = None
-    # _parser_path = "../../tree-sitter/tree-sitter-copybook/copybook.so"  # linux
-    _parser_path = "../../cobol/tree-sitter/tree-sitter-copybook/copybook.so"  # wsl
+    _record_descriptions: list[dict] = None
 
     def __init__(self, copybook_path: str):
-        self.language = self._getLanguage()
+        self.language = Language(language())
         parser = Parser(self.language)
-        with open(copybook_path) as cpy:
-            source = cpy.read()
+        with open(copybook_path) as f:
+            source = f.read()
             tree = parser.parse(bytes(source, "utf8"))
             self.root = tree.root_node
 
-        self.record_descriptions = self.get_record_descriptions()
+        self._record_descriptions = self.extract_record_descriptions()
 
     def get_root_group(self, name: str):
-        for dd in self.record_descriptions:
+        for dd in self.get_root_groups():
             if dd["name"] == name:
                 return dd
 
     def get_root_groups(self):
-        return self.record_descriptions
+        root_groups = []
 
-    def get_record_descriptions(self):
-        if self.record_descriptions != None:
-            return self.record_descriptions
+        for group in self._record_descriptions:
+            if group["name"] == "FILLER":
+                continue
+            # Para um registro geral (PIC X sem filhos), usa a definição
+            # do grupo que redefine ele usando FILLER REDEFINES
+            is_reg_geral = len(group["children"]) == 0
+            if is_reg_geral:
+                for rec in self._record_descriptions:
+                    is_filler = rec["name"] == "FILLER"
+                    redefines_group = rec.get("redefines") == group["name"]
+                    if is_filler and redefines_group:
+                        group["children"] = rec["children"] # pega as definições
+
+            root_groups.append(group)
+
+        return root_groups
+
+    def extract_record_descriptions(self):
+        if self._record_descriptions != None:
+            return self._record_descriptions
 
         data_descriptions = self._match("(data_description) @c")
         capture_query = """(data_description
@@ -84,7 +99,7 @@ class Copybook:
                     if child["level"] != "88":
                         children_are_n88 = False
 
-            if not is_filler and not (has_children and not children_are_n88) :
+            if not is_filler and not (has_children and not children_are_n88):
                 return [node]
 
             leaf_records = []
@@ -95,7 +110,7 @@ class Copybook:
         return get_leaf_records_recursive(group)
 
     def get_group_size(self, group_name: str) -> int:
-        for rec in self.record_descriptions:
+        for rec in self.get_root_groups():
             if rec["name"] == group_name:
                 return rec["bytes"]
 
@@ -223,15 +238,3 @@ class Copybook:
             root["bytes"] += nbytes
 
         return root["bytes"]
-
-    def _getLanguage(self) -> Language:
-        from ctypes import c_void_p, cdll
-
-        name = "copybook"
-        # path = "../cobol/tree-sitter/tree-sitter-copybook/copybook.so"
-        #  ╾──────────────────────────────────────────────────────────────╼
-        lib = cdll.LoadLibrary(fspath(self._parser_path))
-        language_function = getattr(lib, f"tree_sitter_{name}")
-        language_function.restype = c_void_p
-        language_ptr = language_function()
-        return Language(language_ptr)
