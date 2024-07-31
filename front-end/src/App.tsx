@@ -14,18 +14,18 @@ import useGetTableInfo from "./hooks/useTableInfo";
 
 const FILE = "BRT.DEB.DEB307.BAIXA.SS000101";
 const COPYBOOK = "DEBK307";
-const GROUP = "DCLTDEB307";
+// const GROUP = "DCLTDEB307";
 
 // const FILE = "BRT.DEB.DEB1122.D240118.D310.SS000110";
 // const COPYBOOK = "DEBK1122";
 // const GROUP = "DEB1122-REG-DETALHE";
 
 // const GROUP = "601-REG-GERAL"
-// const FILE = "BRT.DEB.DEB601.BAIXA.SS000101"
-// const COPYBOOK = "DEBK601"
+// const FILE = "BRT.DEB.DEB601.BAIXA.SS000101";
+// const COPYBOOK = "DEBK601";
 
 const App = () => {
-  const [group, setGroup] = useState(GROUP);
+  const [group, setGroup] = useState<string>();
   const [groups, setGroups] = useState<string[]>([]);
 
   const { isFetched, groupNames } = useGetTableInfo(COPYBOOK);
@@ -39,9 +39,13 @@ const App = () => {
   useEffect(() => {
     if (isFetched) {
       setGroups(groupNames);
-      refetch();
+      setGroup(groupNames[0]);
     }
-  }, [isFetched]);
+  }, [groupNames, isFetched]);
+
+  useEffect(() => {
+    if (group) refetch();
+  }, [group]);
 
   const { ref, height } = useElementSize();
   const MRTable = useMaterialReactTable({
@@ -49,6 +53,7 @@ const App = () => {
     data: table.data,
     localization: MRT_Localization_PT_BR,
     enableColumnFilterModes: true,
+    enableRowNumbers: true,
     initialState: {
       density: "compact",
       showColumnFilters: true,
@@ -61,7 +66,8 @@ const App = () => {
     enablePagination: false,
     enableRowVirtualization: true,
     enableColumnVirtualization: true,
-    enableRowNumbers: true,
+    rowVirtualizerOptions: { overscan: 5 },
+    columnVirtualizerOptions: { overscan: 5 },
 
     state: { isLoading: isGetTableLoading },
     muiTableContainerProps: {
@@ -86,7 +92,7 @@ const App = () => {
           <Divider orientation="vertical" variant="middle" flexItem />
           <SelectGroup
             groups={groups}
-            selected={groups.length == 0 ? '': group}
+            selected={groups.length == 0 ? "" : group}
             onChange={(group) => {
               setGroup(group);
               refetch();

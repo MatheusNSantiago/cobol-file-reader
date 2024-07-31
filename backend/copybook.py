@@ -26,18 +26,25 @@ class Copybook:
     def get_root_groups(self):
         root_groups = []
 
-        for group in self._record_descriptions:
+        for idx, group in enumerate(self._record_descriptions):
             if group["name"] == "FILLER":
                 continue
             # Para um registro geral (PIC X sem filhos), usa a definição
-            # do grupo que redefine ele usando FILLER REDEFINES
+            # do grupo adjacente que redefine ele usando FILLER REDEFINES
             is_reg_geral = len(group["children"]) == 0
             if is_reg_geral:
-                for rec in self._record_descriptions:
-                    is_filler = rec["name"] == "FILLER"
-                    redefines_group = rec.get("redefines") == group["name"]
-                    if is_filler and redefines_group:
-                        group["children"] = rec["children"] # pega as definições
+                has_next_group = (idx + 1) < len(self._record_descriptions)
+                if not has_next_group:
+                    continue
+                next_group = self._record_descriptions[idx + 1]
+
+                is_filler = next_group["name"] == "FILLER"
+                redefines_group = next_group.get("redefines") == group["name"]
+
+                if is_filler and redefines_group:
+                    group["children"] = next_group["children"]  # pega as definições
+                else:
+                    continue
 
             root_groups.append(group)
 

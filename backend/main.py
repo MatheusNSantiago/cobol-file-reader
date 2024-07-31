@@ -1,8 +1,11 @@
-from fastapi import FastAPI
+import json
 from time import time
-from fastapi.middleware.cors import CORSMiddleware
 
-from converter import extract_record
+from fastapi import FastAPI, Response
+from fastapi.middleware.cors import CORSMiddleware
+from zstandard import ZstdCompressor
+
+from converter import extract_records
 from copybook import Copybook
 
 app = FastAPI()
@@ -28,23 +31,34 @@ def get_groups(copybook: str):
 
 @app.get("/")
 def get_records(group_name: str, file: str, copybook: str):
+    start = time()
     copybook_path = f"./sample-data/copybook/{copybook}.cpy"
     copybook: Copybook = Copybook(copybook_path)
 
-    root: dict = copybook.get_root_group(group_name)
+    group: dict = copybook.get_root_group(group_name)
 
     # Traduz o arquivo para colunas de uma tabela
-    with open(f"./sample-data/files/{file}", "rb") as f:
-        records = [
-            extract_record(root, line)
-            for line in iter(lambda: f.read(root["bytes"]), b"")
-            if line not in [b"", b"\n"]
-        ]
+    with open(f"./sample-data/files/{file}", "rb") as fp:
+        records = extract_records(group, fp)
 
-    columns = [rec["name"] for rec in copybook.get_leaf_records_for_group(root)]
+    columns = [rec["name"] for rec in copybook.get_leaf_records_for_group(group)]
     rows = [[rec[col] for col in columns] for rec in records]
 
-    return {"columns": columns, "rows": rows}
+    result = {"columns": columns, "rows": rows}
+
+    # Comprime o resultado
+    result_bytes = json.dumps(result).encode("utf-8")
+    result_compressed = ZstdCompressor().compress(result_bytes)
+    end = time()
+
+    print("================================")
+    print("time:", end - start)
+    print("================================")
+    return Response(
+        content=result_compressed,
+        media_type="application/octet-stream",  # indica que é binario
+        headers={"Content-Encoding": "zstd"},
+    )
 
 
 # file = "BRT.DEB.DEB1122.D240118.D310.SS000110";
@@ -60,14 +74,8 @@ def get_records(group_name: str, file: str, copybook: str):
 # res = get_group(group, file, copybook)
 # print(res)
 
-group = "DCLTDEB307"
-file = "BRT.DEB.DEB307.BAIXA.SS000101"
-copybook = "DEBK307"
-
-start = time()
-res = get_records(group, file, copybook)
-end = time()
-
-print(res["rows"][-1])
-# print(f"{len(res["rows"]):_}")
-print(f"total: {end - start:.2f} segundos")
+# group = "DCLTDEB307"
+# file = "BRT.DEB.DEB307.BAIXA.SS000101"
+# copybook = "DEBK307"
+#
+# res = get_records(group, file, copybook)

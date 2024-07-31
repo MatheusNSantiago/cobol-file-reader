@@ -1,4 +1,5 @@
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
 import { MRT_ColumnDef } from "material-react-table";
 
 type TableData = {
@@ -17,13 +18,16 @@ const useGetTableData = (groupName: string, file: string, copybook: string) => {
     refetch,
   } = useQuery<GetTableDataResponse>({
     queryKey: ["table-group", groupName],
+    enabled: false,
     queryFn: async () => {
-      const fetchURL = new URL(
-        `http://127.0.0.1:8000/?group_name=${groupName}&file=${file}&copybook=${copybook}`,
-      );
+      const res = await axios.get("http://127.0.0.1:8000/", {
+        params: { group_name: groupName, file, copybook },
+      });
 
-      const res = await fetch(fetchURL.href);
-      const { columns, rows } = (await res.json()) as {
+      // const columns = []
+      // const rows = []
+
+      const { columns, rows } = res.data as {
         columns: string[];
         rows: string[][];
       };
@@ -50,5 +54,19 @@ const useGetTableData = (groupName: string, file: string, copybook: string) => {
     refetch,
   };
 };
+
+// import ZstdCodec from "zstd-codec";
+// const decompressZstd = async (compressedData: Uint8Array) => {
+//   try {
+//     // Initialize the Zstandard codec
+//     await ZstdCodec.run((zstd) => {
+//       // Decompress the data
+//       return zstd.decompress(compressedData);
+//     });
+//   } catch (error) {
+//     console.error("Decompression failed", error);
+//     throw error;
+//   }
+// };
 
 export default useGetTableData;
