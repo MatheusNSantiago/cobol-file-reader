@@ -29,6 +29,13 @@ class Copybook:
         for idx, group in enumerate(self._record_descriptions):
             if group["name"] == "FILLER":
                 continue
+
+            # Se for redefines, usa o tamanho do pai como base
+            if redefined_group := group.get("redefines"):
+                for rec in self._record_descriptions:
+                    if rec["name"] == redefined_group:
+                        group["bytes"] = rec["bytes"]
+
             # Para um registro geral (PIC X sem filhos), usa a definição
             # do grupo adjacente que redefine ele usando FILLER REDEFINES
             is_reg_geral = len(group["children"]) == 0
@@ -61,9 +68,11 @@ class Copybook:
                                redefines: (_)? @redefines
                                type:  (type
                                           def:  (_) @def
-                                          comp: (_)? @comp)? )"""
+                                          comp: (_)? @comp)?
+                               occurs: (_)? @occurs)"""
         captures = [self._capture(capture_query, data) for data in data_descriptions]
 
+        # Extração inicial. Linha por linha, sem estrutura
         records = []
         for capture in captures:
             record = {
@@ -80,6 +89,9 @@ class Copybook:
             if redefines := capture.get("redefines"):
                 record["redefines"] = redefines.text.decode("utf-8").upper()
 
+            if occurs := capture.get("occurs"):
+                record["occurs"] = int(occurs.text.decode("utf-8"))
+
             if _def:
                 data_type = self._assign_data_type(_def, comp)
                 record["data_type"] = data_type
@@ -89,32 +101,14 @@ class Copybook:
 
             records.append(record)
 
+        # Organiza os grupos em pais e filhos
         root_groups = self._organize_into_hierarchy(records)
+
+        # Pra cada grupo level 1, calcula os tamanhos extatos
         for root in root_groups:
-            self._calculate_group_sizes(root)
+            self._calculate_group_size(root)
 
         return root_groups
-
-    def get_leaf_records_for_group(self, group):
-        def get_leaf_records_recursive(node):
-            is_filler = node["name"] == "FILLER"
-
-            has_children = node["children"]
-            if has_children:
-                children_are_n88 = True
-                for child in node["children"]:
-                    if child["level"] != "88":
-                        children_are_n88 = False
-
-            if not is_filler and not (has_children and not children_are_n88):
-                return [node]
-
-            leaf_records = []
-            for child in node["children"]:
-                leaf_records.extend(get_leaf_records_recursive(child))
-            return leaf_records
-
-        return get_leaf_records_recursive(group)
 
     def get_group_size(self, group_name: str) -> int:
         for rec in self.get_root_groups():
@@ -234,14 +228,43 @@ class Copybook:
 
         return roots
 
-    def _calculate_group_sizes(self, root):
+    def _calculate_group_size(self, root):
         if not root["is_group"]:
             return root["bytes"]
 
         root["bytes"] = 0
 
         for child in root["children"]:
-            nbytes = self._calculate_group_sizes(child)
+            nbytes = self._calculate_group_size(child)
             root["bytes"] += nbytes
 
+        # se tiver occurs é pq é uma tabela de tamanho [occurs]
+        root["bytes"] *= root.get("occurs", 1)
+
         return root["bytes"]
+
+
+def get_leaf_records_for_group(group, include_filler=False):
+    def get_leaf_records_recursive(node):
+        is_filler = node["name"] == "FILLER"
+        is_n88 = node["level"] == "88"
+        has_children = len(node["children"]) > 0
+        is_array = node.get("occurs") != None
+
+        if is_array:
+            return [node]
+
+        is_defining_n88 = all(c["level"] == "88" for c in node["children"])
+        if is_defining_n88 and not is_filler:
+            return [node]
+
+        if not (has_children or is_n88):
+            if include_filler or not is_filler:
+                return [node]
+
+        leaf_records = []
+        for child in node["children"]:
+            leaf_records.extend(get_leaf_records_recursive(child))
+        return leaf_records
+
+    return get_leaf_records_recursive(group)

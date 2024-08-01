@@ -4,6 +4,7 @@ import Example from "./App.tsx";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
+import React from "react";
 
 const darkTheme = createTheme({
   palette: { mode: "dark" },

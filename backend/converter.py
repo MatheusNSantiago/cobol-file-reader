@@ -2,6 +2,8 @@ from io import BufferedReader
 from multiprocessing import Pool, cpu_count
 from typing import Any
 
+from copybook import get_leaf_records_for_group
+
 
 def extract_records(group: dict, fp: BufferedReader):
     lines = []
@@ -10,8 +12,11 @@ def extract_records(group: dict, fp: BufferedReader):
             break
         lines.append(line)
 
+    group["children"] = get_leaf_records_for_group(group, include_filler=True)
+
     with Pool(cpu_count()) as pool:
         results = pool.starmap(extract_record, [(group, line) for line in lines])
+    # results = [extract_record(group, line) for line in lines]
     return results
 
 
@@ -33,10 +38,14 @@ def extract_record(group: dict, line: bytes):
     for child in group["children"]:
         name = child["name"]
         offset = child["bytes"]
-        data_type = child["data_type"]
 
-        _bytes = line[curr_byte : curr_byte + offset]
-        content = translate_bytes(_bytes, data_type)
+        # Por enquanto, vamos ignorar arrays
+        is_array = child.get("occurs") != None
+        if not is_array:
+            data_type = child["data_type"]
+
+            _bytes = line[curr_byte : curr_byte + offset]
+            content = translate_bytes(_bytes, data_type)
 
         if "FILLER" not in name:
             result[name] = content
@@ -44,6 +53,53 @@ def extract_record(group: dict, line: bytes):
         curr_byte += offset
 
     return result
+
+
+def _translate_bytes(_bytes: bytearray, data_type):
+    hex = _bytes.hex()
+
+    # ch: text  - x
+    # zd: zoned - 9
+    if data_type in ["ch", "zd"]:
+        return _bytes.decode("cp037").replace("\x00", "").rstrip()
+
+    #  pd : packed-decimal       :  9 COMP-3
+    #  pd+: signed packed-decimal: S9 COMP-3
+    if data_type in ["pd", "pd+"]:
+        # No packed decimal, os ultimos 4 bits (1/2 byte) representam o sinal
+        last_half_byte = hex[-1:]
+
+        is_positive = last_half_byte == "d"
+        is_negative = last_half_byte == "b"
+
+        sign = "" if not (is_positive or is_negative) else "-"
+        unsigned_value = hex[:-1]
+
+        return sign + unsigned_value
+
+    #  bi : binary       :  9 COMP
+    #  bi+: signed binary: S9 COMP
+
+    if data_type == "bi" or (
+        data_type == "bi+" and hex <= "7fffffffffffffffffff"[: len(_bytes) * 2]
+    ):
+        hex = "0x" + hex if _bytes else "0x0"
+        return str(int(hex, 0))
+
+    # bi+: signed binary: S9 COMP
+    if data_type == "bi+":
+        hex = "0x" + hex if _bytes else "0x0"
+        return str(int(hex, 0) - int("0x" + len(_bytes) * 2 * "f", 0) - 1)
+
+    # zd+: signed zoned: S9
+    if data_type == "zd+":
+        last_byte = hex[-2:-1]
+
+        sign = "" if last_byte != "d" else "-"
+        unsigned_value = _bytes[:-1].decode("cp037")
+        last_half_byte = hex[-1:]
+
+        return sign + unsigned_value + last_half_byte
 
 
 def translate_bytes(_bytes: bytes, data_type: str):
@@ -109,51 +165,3 @@ def translate_bytes(_bytes: bytes, data_type: str):
                 return unpack_signed_binary()
         case "zd+":
             return unpack_signed_number()
-
-
-# def translate_bytes(_bytes: bytearray, description):
-#     data_type = description["data_type"]
-#     hex = _bytes.hex()
-#
-#     # ch: text  - x
-#     # zd: zoned - 9
-#     if data_type in ["ch", "zd"]:
-#         return _bytes.decode("cp037").replace("\x00", "").rstrip()
-#
-#
-#     #  pd : packed-decimal       :  9 COMP-3
-#     #  pd+: signed packed-decimal: S9 COMP-3
-#     if data_type in ["pd", "pd+"]:
-#         # No packed decimal, os ultimos 4 bits (1/2 byte) representam o sinal
-#         last_half_byte = hex[-1:]
-#
-#         is_positive = last_half_byte == "d"
-#         is_negative = last_half_byte == "b"
-#
-#         sign = "" if not (is_positive or is_negative) else "-"
-#         unsigned_value = hex[:-1]
-#
-#         return sign + unsigned_value
-#
-#     #  bi : binary       :  9 COMP
-#     #  bi+: signed binary: S9 COMP
-#     if data_type == "bi" or (
-#         data_type == "bi+" and hex <= HighestPositive[: len(_bytes) * 2]
-#     ):
-#         hex = "0x" + hex if _bytes else "0x0"
-#         return str(int(hex, 0))
-#
-#     # bi+: signed binary: S9 COMP
-#     if data_type == "bi+":
-#         hex = "0x" + hex if _bytes else "0x0"
-#         return str(int(hex, 0) - int("0x" + len(_bytes) * 2 * "f", 0) - 1)
-#
-#     # zd+: signed zoned: S9
-#     if data_type == "zd+":
-#         last_byte = hex[-2:-1]
-#
-#         sign = "" if last_byte != "d" else "-"
-#         unsigned_value = _bytes[:-1].decode("cp037")
-#         last_half_byte = hex[-1:]
-#
-#         return sign + unsigned_value + last_half_byte

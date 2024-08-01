@@ -1,4 +1,5 @@
 import json
+from pprint import pprint
 from time import time
 
 from fastapi import FastAPI, Response
@@ -6,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from zstandard import ZstdCompressor
 
 from converter import extract_records
-from copybook import Copybook
+from copybook import Copybook, get_leaf_records_for_group
 
 app = FastAPI()
 
@@ -37,13 +38,12 @@ def get_records(group_name: str, file: str, copybook: str):
 
     group: dict = copybook.get_root_group(group_name)
 
-    # Traduz o arquivo para colunas de uma tabela
+    # # Traduz o arquivo para colunas de uma tabela
     with open(f"./sample-data/files/{file}", "rb") as fp:
         records = extract_records(group, fp)
 
-    columns = [rec["name"] for rec in copybook.get_leaf_records_for_group(group)]
+    columns = [rec["name"] for rec in get_leaf_records_for_group(group)]
     rows = [[rec[col] for col in columns] for rec in records]
-
     result = {"columns": columns, "rows": rows}
 
     # Comprime o resultado
@@ -68,14 +68,23 @@ def get_records(group_name: str, file: str, copybook: str):
 # print(res)
 
 
-# group = "601-REG-GERAL"
+# group = "601-REG-FAIXA-A"
+# # group = "601-REG-GERAL"
 # file = "BRT.DEB.DEB601.BAIXA.SS000101"
 # copybook = "DEBK601"
-# res = get_group(group, file, copybook)
-# print(res)
-
-# group = "DCLTDEB307"
-# file = "BRT.DEB.DEB307.BAIXA.SS000101"
-# copybook = "DEBK307"
-#
 # res = get_records(group, file, copybook)
+#
+# foo = {}
+# rows = res["rows"][0]
+# for i, col in enumerate(res["columns"]):
+#     foo[col] = rows[i]
+#
+# __import__('pprint').pprint(foo)
+# print(foo["601A-MOV-ATL-AAAAMMDD"])
+# print(foo["601A-MOV-ANT-AAAAMMDD"])
+
+group = "DCLTDEB307"
+file = "BRT.DEB.DEB307.BAIXA.SS000101"
+copybook = "DEBK307"
+
+res = get_records(group, file, copybook)

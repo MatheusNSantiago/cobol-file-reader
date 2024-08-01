@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { MRT_ColumnDef } from "material-react-table";
+import { MRT_ColumnDef } from "mantine-react-table";
 
 type TableData = {
   [key: string]: string;
@@ -32,6 +32,9 @@ const useGetTableData = (groupName: string, file: string, copybook: string) => {
         rows: string[][];
       };
 
+      console.log(rows.length);
+
+
       return {
         columns: columns.map((column) => ({
           header: column,
@@ -54,19 +57,5 @@ const useGetTableData = (groupName: string, file: string, copybook: string) => {
     refetch,
   };
 };
-
-// import ZstdCodec from "zstd-codec";
-// const decompressZstd = async (compressedData: Uint8Array) => {
-//   try {
-//     // Initialize the Zstandard codec
-//     await ZstdCodec.run((zstd) => {
-//       // Decompress the data
-//       return zstd.decompress(compressedData);
-//     });
-//   } catch (error) {
-//     console.error("Decompression failed", error);
-//     throw error;
-//   }
-// };
 
 export default useGetTableData;
