@@ -1,4 +1,4 @@
-import { MantineThemeProvider } from "@mantine/core";
+import { MantineProvider } from "@mantine/core";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import React from "react";
 import { queryConfig } from "../lib/react-query";
@@ -13,8 +13,8 @@ export const AppProvider = ({ children }: AppProviderProps) => {
   });
 
   return (
-    <MantineThemeProvider>
+    <MantineProvider>
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    </MantineThemeProvider>
+    </MantineProvider>
   );
 };
