@@ -1,0 +1,123 @@
+{
+  "name": "template-picker-extension",
+  "displayName": "Template picker",
+  "description": "A R2Devops extension. Search and pick templates to include them in your .gitlab-ci.yml files !",
+  "version": "0.1.0",
+  "publisher": "r2devops",
+  "license": "MIT",
+  "author": {
+    "name": "R2Devops",
+    "email": "tech@r2devops.io"
+  },
+  "galleryBanner.color": "#00B1D2",
+  "icon": "assets/logo.png",
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.com/r2devops/template-picker"
+  },
+  "engines": {
+    "vscode": "^1.89.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets"
+  ],
+  "keywords": [
+    "r2devops",
+    "gitlab",
+    "ci/cd",
+    "yaml",
+    "pipeline",
+    "templates"
+  ],
+  "activationEvents": [
+    "onLanguage:yaml"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "template-picker.showTemplatePicker",
+        "title": "Template Picker: Open Marketplace to the Side",
+        "icon": "$(gist)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "template-picker.showTemplatePicker",
+        "key": "ctrl+alt+p",
+        "mac": "cmd+alt+p"
+      }
+    ],
+    "configuration": {
+      "title": "Template picker",
+      "properties": {
+        "template_picker.api_url": {
+          "type": "string",
+          "default": "https://api.r2devops.io",
+          "description": "URL of the R2Devops API to reach (end without `/`)",
+          "title": "API URL"
+        },
+        "template_picker.gitlab_url": {
+          "type": "string",
+          "default": "https://gitlab.com",
+          "description": "URL of your GitLab instance.",
+          "title": "GitLab URL"
+        },
+        "template_picker.show_panel_gitlab_file_open": {
+          "type": "boolean",
+          "default": true,
+          "description": "The panel will be shown when opening a .gitlab-ci.yml file",
+          "title": "Show panel when opening a .gitlab-ci.yml file"
+        },
+        "template_picker.show_notification": {
+          "type": "boolean",
+          "default": true,
+          "description": "Display a notification prompting the configuration of the template picker panel's automatic display",
+          "title": "Prompt for automatic display configuration when opening a .gitlab-ci.yml file"
+        }
+      }
+    },
+    "menus": {
+      "editor/title": [
+        {
+          "command": "template-picker.showTemplatePicker",
+          "when": "editorLangId == yaml || editorLangId == yml && (resourceExtname == .yml || resourceExtname == .yaml) && resourceFilename =~ /^.*.gitlab-ci.yml$/ && !notebookEditorFocused",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "install:all": "npm install && cd webview-ui && npm install",
+    "start:webview": "cd webview-ui && npm run start",
+    "build:webview": "cd webview-ui && npm run build",
+    "test:webview": "cd webview-ui && npm run test",
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "build": "npm run compile && npm run build:webview",
+    "pretest": "npm run compile && npm run lint",
+    "test": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "clean": "tsc --build --clean"
+  },
+  "devDependencies": {
+    "@types/glob": "^7.1.3",
+    "@types/node": "^12.11.7",
+    "@types/vscode": "^1.89.0",
+    "@typescript-eslint/eslint-plugin": "^4.14.1",
+    "@typescript-eslint/parser": "^4.14.1",
+    "eslint": "^7.19.0",
+    "glob": "^7.1.6",
+    "prettier": "^2.2.1",
+    "typescript": "^4.9.5",
+    "vscode-test": "^1.5.0"
+  },
+  "dependencies": {
+    "codepage": "^1.15.0",
+    "tree-sitter": "^0.22.4",
+    "tree-sitter-copybook": "file:./../tree-sitter/tree-sitter-copybook",
+    "yaml": "^1.10.2"
+  }
+}
