@@ -42,7 +42,9 @@ export function activate(context: ExtensionContext) {
   // Create the show hello world command
   const showTemplatePickerCommand = commands.registerCommand(
     "template-picker.showTemplatePicker",
-    () => TemplatePickerPanel.render(context.extensionUri)
+    () => {
+      TemplatePickerPanel.render(context.extensionUri);
+    },
   );
 
   // Add command to the extension context

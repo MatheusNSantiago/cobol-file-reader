@@ -1,15 +1,15 @@
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
 main {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: flex-start;
   height: 100%;
-}
-
-main > * {
-  margin: 1rem 0;
-}
-
-#job-row:hover {
-  opacity: 0.75;
 }

@@ -1,116 +1,76 @@
-import { useGetTableData } from "../api/useGetTableData";
+import {
+  MantineReactTable,
+  MRT_ShowHideColumnsButton,
+  MRT_ToggleFiltersButton,
+  useMantineReactTable,
+} from "mantine-react-table";
+import { Box, Divider, Flex, Loader } from "@mantine/core";
+import SelectGroup from "./components/select-group";
+import useTableDataManager from "../api/useTableDataManager";
 
-// const App = () => {
-//   const { isLoading, table } = useGetTableData({
-//     group: "601-REG-GERAL",
-//     file: "BRT.DEB.DEB601.BAIXA.SS000101",
-//     copybook: "DEBK601",
-//   });
-//   //
-//   // if (!isLoading) {
-//     return <div>não carregou</div>;
-//   // }
-//
-//   // return <div>{JSON.stringify(table)}</div>;
-// };
-// export default App;
-
-import { useMemo } from "react";
-import { MantineReactTable, useMantineReactTable, type MRT_ColumnDef } from "mantine-react-table";
-
-type Person = {
-  name: {
-    firstName: string;
-    lastName: string;
-  };
-  address: string;
-  city: string;
-  state: string;
-};
-
-//nested data is ok, see accessorKeys in ColumnDef below
-const data: Person[] = [
-  {
-    name: {
-      firstName: "Zachary",
-      lastName: "Davis",
-    },
-    address: "261 Battle Ford",
-    city: "Columbus",
-    state: "Ohio",
-  },
-  {
-    name: {
-      firstName: "Robert",
-      lastName: "Smith",
-    },
-    address: "566 Brakus Inlet",
-    city: "Westerville",
-    state: "West Virginia",
-  },
-  {
-    name: {
-      firstName: "Kevin",
-      lastName: "Yan",
-    },
-    address: "7777 Kuhic Knoll",
-    city: "South Linda",
-    state: "West Virginia",
-  },
-  {
-    name: {
-      firstName: "John",
-      lastName: "Upton",
-    },
-    address: "722 Emie Stream",
-    city: "Huntington",
-    state: "Washington",
-  },
-  {
-    name: {
-      firstName: "Nathan",
-      lastName: "Harris",
-    },
-    address: "1 Kuhic Knoll",
-    city: "Ohiowa",
-    state: "Nebraska",
-  },
-];
+const FILE = "BRT.DEB.DEB307.BAIXA.SS000101";
+const COPYBOOK = "DEBK307";
 
 const App = () => {
-  //should be memoized or stable
-  const columns = useMemo<MRT_ColumnDef<Person>[]>(
-    () => [
-      {
-        accessorKey: "name.firstName", //access nested data with dot notation
-        header: "First Name",
-      },
-      {
-        accessorKey: "name.lastName",
-        header: "Last Name",
-      },
-      {
-        accessorKey: "address", //normal accessorKey
-        header: "Address",
-      },
-      {
-        accessorKey: "city",
-        header: "City",
-      },
-      {
-        accessorKey: "state",
-        header: "State",
-      },
-    ],
-    []
-  );
+  const manager = useTableDataManager(COPYBOOK, FILE);
 
-  const table = useMantineReactTable({
-    columns,
-    data, //must be memoized or stable (useState, useMemo, defined outside of this component, etc.)
+  // Garantir que sempre existem valores padrão
+  const tableColumns = manager.data?.columns ?? [];
+  const tableData = manager.data?.data ?? [];
+
+  // Evitar renderização prematura enquanto carrega
+  if (manager.isGroupsLoading || manager.isTableLoading) {
+    return (
+      <Flex justify="center" align="center" style={{ height: "100vh" }}>
+        <Loader size="xl" />
+      </Flex>
+    );
+  }
+
+  const MRTable = useMantineReactTable({
+    columns: tableColumns,
+    data: tableData,
+    enableColumnFilterModes: true,
+    enableRowNumbers: true,
+    initialState: { showColumnFilters: true },
+    enableTopToolbar: false,
+    enableDensityToggle: false,
+    enableFullScreenToggle: false,
+    enableBottomToolbar: false,
+    enablePagination: false,
+    enableColumnVirtualization: true,
+    rowVirtualizerOptions: { overscan: 10 },
+    columnVirtualizerOptions: { overscan: 5 },
+    state: { isLoading: manager.isTableLoading },
   });
 
-  return <MantineReactTable table={table} />;
+  return (
+    <Flex direction="column">
+      <Flex mx={20} justify="space-between">
+        <Flex align={"center"} gap="1rem">
+          <h3>{FILE}</h3>
+          <Divider orientation="vertical" />
+
+          {/* Renderiza SelectGroup somente se houver grupos carregados */}
+          {manager.groups && manager.groups.length > 0 && (
+            <SelectGroup
+              groups={manager.groups}
+              selected={manager.selectedGroup ?? manager.groups[0]}
+              onChange={(group) => manager.setSelectedGroup(group)}
+            />
+          )}
+        </Flex>
+
+        <Box display="flex">
+          <MRT_ToggleFiltersButton table={MRTable} />
+          <MRT_ShowHideColumnsButton table={MRTable} />
+        </Box>
+      </Flex>
+
+      <MantineReactTable table={MRTable} />
+    </Flex>
+  );
 };
 
 export default App;
+

@@ -5,18 +5,10 @@ import {
   window,
   Uri,
   ViewColumn,
-  Range,
-  workspace,
 } from "vscode";
 import { getUri } from "../utilities/getUri";
 import { getNonce } from "../utilities/getNonce";
-import {
-  Message,
-  AddRemoteUrlMessage,
-  COMMAND,
-  InjectConfigurationMessage,
-} from "../models/message.model";
-import { generateCiWithRemoteUrl } from "../utilities/gitlab";
+import { COMMAND, InjectConfigurationMessage } from "../models/message.model";
 import { getConfig } from "../utilities/getConfiguration";
 import { getGroups, getTableData } from "../converter";
 
@@ -49,7 +41,10 @@ export class TemplatePickerPanel {
     this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
 
     // Set the HTML content for the webview panel
-    this._panel.webview.html = this._getWebviewContent(this._panel.webview, extensionUri);
+    this._panel.webview.html = this._getWebviewContent(
+      this._panel.webview,
+      extensionUri
+    );
 
     // Set an event listener to listen for messages passed from the webview context
     this._setWebviewMessageListener(this._panel.webview);
@@ -64,7 +59,7 @@ export class TemplatePickerPanel {
   public static render(extensionUri: Uri) {
     if (TemplatePickerPanel.currentPanel) {
       // If the webview panel already exists reveal it
-      TemplatePickerPanel.currentPanel._panel.reveal(ViewColumn.Beside);
+      TemplatePickerPanel.currentPanel._panel.reveal(ViewColumn.One);
     } else {
       // If a webview panel does not already exist create and show a new one
       const panel = window.createWebviewPanel(
@@ -73,7 +68,7 @@ export class TemplatePickerPanel {
         // Panel title
         "Template Picker",
         // The editor column the panel should be displayed in
-        ViewColumn.Beside,
+        ViewColumn.One,
         // Extra panel configurations
         {
           // Enable JavaScript in the webview
@@ -86,10 +81,10 @@ export class TemplatePickerPanel {
           ],
         }
       );
-      // const iconPath = getUri(panel.webview, extensionUri, ["webview-ui", "build", "logo128.png"]);
-      // panel.iconPath = iconPath;
-
-      TemplatePickerPanel.currentPanel = new TemplatePickerPanel(panel, extensionUri);
+      TemplatePickerPanel.currentPanel = new TemplatePickerPanel(
+        panel,
+        extensionUri
+      );
 
       // Transfer configuration variable trough Message
       const { copybookDirectory } = getConfig();
@@ -136,40 +131,32 @@ export class TemplatePickerPanel {
     const stylesUri = getUri(webview, extensionUri, [
       "webview-ui",
       "build",
-      "static",
-      "css",
-      "main.css",
+      "assets",
+      "index.css",
     ]);
     // The JS file from the React build output
     const scriptUri = getUri(webview, extensionUri, [
       "webview-ui",
       "build",
-      "static",
-      "js",
-      "main.js",
+      "assets",
+      "index.js",
     ]);
 
     const nonce = getNonce();
-
-    // Inject only the authorized configuration
-    // TODO: URL should match a pattern to avoid inserting junk URL and make request to other URLs.
-    const configuration = getConfig();
 
     // Tip: Install the es6-string-html VS Code extension to enable code highlighting below
     return /*html*/ `
       <!DOCTYPE html>
       <html lang="en">
         <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
-          <meta name="theme-color" content="#000000">
+          <meta charset="UTF-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
           <link rel="stylesheet" type="text/css" href="${stylesUri}">
           <title>Hello World</title>
         </head>
         <body>
-          <noscript>You need to enable JavaScript to run this app.</noscript>
           <div id="root"></div>
-          <script nonce="${nonce}" src="${scriptUri}"></script>
+          <script type="module" nonce="${nonce}" src="${scriptUri}"></script>
         </body>
       </html>
     `;
@@ -188,12 +175,26 @@ export class TemplatePickerPanel {
         try {
           switch (message.command) {
             case "getGroups":
-              const groupNames = await getGroups(this.extensionUri.path, message.copybook);
-              webview.postMessage({ command: "groupsReady", groups: groupNames });
+              const groupNames = await getGroups(
+                this.extensionUri.path,
+                message.copybook
+              );
+              webview.postMessage({
+                command: "groupsReady",
+                groups: groupNames,
+              });
               break;
             case "getTableData":
               const { group, file, copybook } = message;
-              const tableData = await getTableData(this.extensionUri.path, group, file, copybook);
+              console.log("===============================================")
+              console.log({group, file, copybook});
+              console.log("===============================================")
+              const tableData = await getTableData(
+                this.extensionUri.path,
+                group,
+                file,
+                copybook
+              );
               webview.postMessage({
                 command: "tableDataReady",
                 tableData,
@@ -211,71 +212,5 @@ export class TemplatePickerPanel {
       undefined,
       this._disposables
     );
-
-    // webview.onDidReceiveMessage(
-    //   (message: Message) => {
-    //     const command = message.command;
-    //
-    //     switch (command) {
-    //       case "hello":
-    //         // Code that should run in response to the hello message command
-    //         window.showInformationMessage(message.data.text);
-    //         return;
-    //       // Add more switch case statements here as more webview message commands
-    //       // are created within the webview context (i.e. inside media/main.js)
-    //       case COMMAND.addRemoteUrlMessage:
-    //         const messageRemote = message as AddRemoteUrlMessage;
-    //         // Cast the message to the correct type
-    //         const { remoteUrl, stages } = messageRemote.data;
-    //         // Extract the url and the array of stages from the message
-    //         if (!remoteUrl || !stages) {
-    //           return window.showErrorMessage(
-    //             `Undefined stages: ${stages} or remote url: ${remoteUrl}`
-    //           );
-    //         }
-    //         this.addRemoteUrlToGitlabCiFile(remoteUrl, stages);
-    //         return;
-    //     }
-    //   },
-    //   undefined,
-    //   this._disposables
-    // );
   }
-
-  // private addRemoteUrlToGitlabCiFile(remoteUrl: string, stages: string[]) {
-  //   const editors = window.visibleTextEditors;
-  //   const gitlabCiEditor = editors.find((editor) =>
-  //     editor.document.fileName.endsWith(".gitlab-ci.yml")
-  //   );
-  //
-  //   if (gitlabCiEditor && gitlabCiEditor.document) {
-  //     const document = gitlabCiEditor.document;
-  //
-  //     // Get the text within the document
-  //     const gitlabFileContent = document.getText();
-  //
-  //     // Generate the new document with the remote url added
-  //     try {
-  //       const documentWithRemoteUrlAdded = generateCiWithRemoteUrl(
-  //         remoteUrl,
-  //         stages,
-  //         gitlabFileContent
-  //       );
-  //
-  //       const wholeDocument = new Range(
-  //         document.positionAt(0),
-  //         document.positionAt(gitlabFileContent.length)
-  //       );
-  //
-  //       gitlabCiEditor.edit((editBuilder) => {
-  //         editBuilder.replace(wholeDocument, documentWithRemoteUrlAdded);
-  //       });
-  //       window.showInformationMessage("Remote url added to gitlab-ci.yml");
-  //     } catch (error) {
-  //       if (error instanceof Error) {
-  //         return window.showErrorMessage(error.message);
-  //       }
-  //     }
-  //   }
-  // }
 }

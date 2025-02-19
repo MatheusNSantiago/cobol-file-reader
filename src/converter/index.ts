@@ -2,10 +2,13 @@ import * as path from "path";
 import { Copybook } from "./copybook/copybook";
 import { extractRecordsFromFile } from "./extractor";
 
-export async function getGroups(extensionPath: string, copybookName: string): Promise<string[]> {
+export async function getGroups(
+  extensionPath: string,
+  copybookName: string,
+): Promise<string[]> {
   try {
     const copybook = Copybook.fromPath(
-      path.join(extensionPath, "assets", "copybook", `${copybookName}.cpy`)
+      path.join(extensionPath, "assets", "copybook", `${copybookName}.cpy`),
     );
     const groups = copybook
       .get_root_groups()
@@ -22,10 +25,15 @@ export async function getTableData(
   extensionPath: string,
   groupName: string,
   fileName: string,
-  copybookName: string
+  copybookName: string,
 ): Promise<{ columns: string[]; rows: string[][] }> {
   try {
-    const copybookPath = path.join(extensionPath, "assets", "copybook", `${copybookName}.cpy`);
+    const copybookPath = path.join(
+      extensionPath,
+      "assets",
+      "copybook",
+      `${copybookName}.cpy`,
+    );
     const copybook = Copybook.fromPath(copybookPath);
 
     const group = copybook.getRootGroup(groupName);
