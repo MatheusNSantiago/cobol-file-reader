@@ -34,7 +34,7 @@ export function extractRecordsFromFile(
       break;
     }
     lines.push(line);
-    if (lines.length > 10) {
+    if (lines.length > 5_000) {
       break;
     }
     start += group.bytes;

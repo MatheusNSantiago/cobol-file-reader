@@ -8,9 +8,7 @@ import { createRoot } from "react-dom/client";
 import { AppProvider } from "./app/provider";
 
 createRoot(document.getElementById("root")!).render(
-  <>
-    <AppProvider>
-      <App />
-    </AppProvider>
-  </>
+  <AppProvider>
+    <App />
+  </AppProvider>,
 );

@@ -33,7 +33,10 @@ export class TemplatePickerPanel {
    * @param panel A reference to the webview panel
    * @param extensionUri The URI of the directory containing the extension
    */
-  private constructor(panel: WebviewPanel, private readonly extensionUri: Uri) {
+  private constructor(
+    panel: WebviewPanel,
+    private readonly extensionUri: Uri,
+  ) {
     this._panel = panel;
 
     // Set an event listener to listen for when the panel is disposed (i.e. when the user closes
@@ -43,7 +46,7 @@ export class TemplatePickerPanel {
     // Set the HTML content for the webview panel
     this._panel.webview.html = this._getWebviewContent(
       this._panel.webview,
-      extensionUri
+      extensionUri,
     );
 
     // Set an event listener to listen for messages passed from the webview context
@@ -66,7 +69,7 @@ export class TemplatePickerPanel {
         // Panel view type
         "showTemplatePicker",
         // Panel title
-        "Template Picker",
+        "Sei lá",
         // The editor column the panel should be displayed in
         ViewColumn.One,
         // Extra panel configurations
@@ -79,11 +82,11 @@ export class TemplatePickerPanel {
             Uri.joinPath(extensionUri, "out"),
             Uri.joinPath(extensionUri, "webview-ui/build"),
           ],
-        }
+        },
       );
       TemplatePickerPanel.currentPanel = new TemplatePickerPanel(
         panel,
-        extensionUri
+        extensionUri,
       );
 
       // Transfer configuration variable trough Message
@@ -177,7 +180,7 @@ export class TemplatePickerPanel {
             case "getGroups":
               const groupNames = await getGroups(
                 this.extensionUri.path,
-                message.copybook
+                message.copybook,
               );
               webview.postMessage({
                 command: "groupsReady",
@@ -186,14 +189,11 @@ export class TemplatePickerPanel {
               break;
             case "getTableData":
               const { group, file, copybook } = message;
-              console.log("===============================================")
-              console.log({group, file, copybook});
-              console.log("===============================================")
               const tableData = await getTableData(
                 this.extensionUri.path,
                 group,
                 file,
-                copybook
+                copybook,
               );
               webview.postMessage({
                 command: "tableDataReady",
@@ -210,7 +210,7 @@ export class TemplatePickerPanel {
         }
       },
       undefined,
-      this._disposables
+      this._disposables,
     );
   }
 }

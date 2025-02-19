@@ -114,6 +114,6 @@
   "dependencies": {
     "codepage": "^1.15.0",
     "tree-sitter": "^0.22.4",
-    "tree-sitter-copybook": "file:./../tree-sitter/tree-sitter-copybook"
+    "tree-sitter-copybook": "file:./../cobol/tree-sitter/tree-sitter-copybook"
   }
 }

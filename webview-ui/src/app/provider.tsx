@@ -6,5 +6,5 @@ type AppProviderProps = {
 };
 
 export const AppProvider = ({ children }: AppProviderProps) => {
-  return <MantineProvider>{children}</MantineProvider>;
+  return <MantineProvider defaultColorScheme={"dark"}>{children}</MantineProvider>;
 };

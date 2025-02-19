@@ -15,34 +15,19 @@ const App = () => {
   const manager = useTableDataManager(COPYBOOK, FILE);
 
   // Garantir que sempre existem valores padrão
-  const tableColumns = manager.data?.columns ?? [];
-  const tableData = manager.data?.data ?? [];
+  const tableColumns = manager.data.columns;
+  const tableData = manager.data.data;
 
   // Evitar renderização prematura enquanto carrega
-  if (manager.isGroupsLoading || manager.isTableLoading) {
-    return (
-      <Flex justify="center" align="center" style={{ height: "100vh" }}>
-        <Loader size="xl" />
-      </Flex>
-    );
-  }
-
-  const MRTable = useMantineReactTable({
-    columns: tableColumns,
-    data: tableData,
-    enableColumnFilterModes: true,
-    enableRowNumbers: true,
-    initialState: { showColumnFilters: true },
-    enableTopToolbar: false,
-    enableDensityToggle: false,
-    enableFullScreenToggle: false,
-    enableBottomToolbar: false,
-    enablePagination: false,
-    enableColumnVirtualization: true,
-    rowVirtualizerOptions: { overscan: 10 },
-    columnVirtualizerOptions: { overscan: 5 },
-    state: { isLoading: manager.isTableLoading },
-  });
+  // if (manager.isGroupsLoading || manager.isTableLoading) {
+  //   return (
+  //     <Flex justify="center" align="center" style={{ height: "100vh" }}>
+  //       <Loader size="xl" />
+  //     </Flex>
+  //   );
+  // }
+  //
+  // console.log(tableColumns);
 
   return (
     <Flex direction="column">
@@ -61,16 +46,30 @@ const App = () => {
           )}
         </Flex>
 
-        <Box display="flex">
-          <MRT_ToggleFiltersButton table={MRTable} />
-          <MRT_ShowHideColumnsButton table={MRTable} />
-        </Box>
+        {/* <Box display="flex"> */}
+        {/*   <MRT_ToggleFiltersButton table={MRTable} /> */}
+        {/*   <MRT_ShowHideColumnsButton table={MRTable} /> */}
+        {/* </Box> */}
       </Flex>
 
-      <MantineReactTable table={MRTable} />
+      <MantineReactTable
+        columns={tableColumns}
+        data={tableData}
+        enableColumnFilterModes={true}
+        enableRowNumbers={true}
+        initialState={{ showColumnFilters: true }}
+        enableTopToolbar={false}
+        enableDensityToggle={false}
+        enableFullScreenToggle={false}
+        enableBottomToolbar={false}
+        enablePagination={false}
+        enableColumnVirtualization={true}
+        rowVirtualizerOptions={{ overscan: 10 }}
+        columnVirtualizerOptions={{ overscan: 5 }}
+        state={{ isLoading: manager.isTableLoading }}
+      />
     </Flex>
   );
 };
 
 export default App;
-
