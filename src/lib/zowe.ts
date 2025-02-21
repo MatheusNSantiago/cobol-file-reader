@@ -34,8 +34,6 @@ class _Zowe {
   private api: any = null;
   private profile: any = null;
 
-  constructor() {}
-
   public async initialize(): Promise<void> {
     const zoweExplorerApi = await this.getZowe();
     if (!zoweExplorerApi) {
