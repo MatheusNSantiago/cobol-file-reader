@@ -1,8 +1,9 @@
-import { commands, ExtensionContext } from "vscode";
+import path from "path/posix";
+import { commands, ExtensionContext, window } from "vscode";
+import { Zowe } from "./lib/zowe";
 import { TemplatePickerPanel } from "./panels/TemplatePickerPanel";
 
 export function activate(context: ExtensionContext) {
-  // window.onDidChangeActiveTextEditor(async (editor) => {
   //   const { showPanelGitlabFile, showNotification } = getConfig();
   //
   //   if (editor && showPanelGitlabFile) {
@@ -47,4 +48,25 @@ export function activate(context: ExtensionContext) {
 
   // Add command to the extension context
   context.subscriptions.push(showTemplatePickerCommand);
+
+  const fooCommand = commands.registerCommand(
+    "template-picker.foobar",
+    async () => {
+      const pattern = await window.showInputBox({
+        title: "Procurar dataset",
+        placeHolder: "HLQ.*",
+        value: "BRT.ACH.ACH601.TST.TC486.SS000109",
+        // value: "BRT.ACH*",
+        ignoreFocusOut: true,
+      });
+      await Zowe.initialize();
+
+      const result = await Zowe.readDataset(pattern!);
+
+      console.log(result);
+    },
+  );
+
+  // Add command to the extension context
+  context.subscriptions.push(fooCommand);
 }

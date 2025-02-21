@@ -31,7 +31,7 @@
     "templates"
   ],
   "activationEvents": [
-    "onLanguage:yaml"
+    "onStartupFinished"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -39,6 +39,11 @@
       {
         "command": "template-picker.showTemplatePicker",
         "title": "Template Picker: Open Marketplace to the Side",
+        "icon": "$(gist)"
+      },
+      {
+        "command": "template-picker.foobar",
+        "title": "Abrir Picker",
         "icon": "$(gist)"
       }
     ],
@@ -115,5 +120,9 @@
     "codepage": "^1.15.0",
     "tree-sitter": "^0.22.4",
     "tree-sitter-copybook": "file:./../cobol/tree-sitter/tree-sitter-copybook"
-  }
+  },
+  "extensionDependencies": [
+    "zowe.vscode-extension-for-zowe",
+    "bb-mainframe.kdz-conexao-rseapi-vscode"
+  ]
 }
