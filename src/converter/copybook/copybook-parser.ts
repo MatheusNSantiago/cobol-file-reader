@@ -39,9 +39,13 @@ export class CopybookParser {
                                           def:  (_) @def
                                           comp: (_)? @comp)?
                                occurs: (_)? @occurs)`;
-    const captures = dataDescriptions.map((data) => this._capture(captureQuery, data));
+    const captures = dataDescriptions.map((data) =>
+      this._capture(captureQuery, data),
+    );
 
-    const records = captures.map((capture) => this._createRecordFromCapture(capture));
+    const records = captures.map((capture) =>
+      this._createRecordFromCapture(capture),
+    );
 
     return this.transformToHierarchy(records);
   }
@@ -54,24 +58,26 @@ export class CopybookParser {
     const redefines = this._extractText(capture["redefines"]);
     const occurs = this._extractInt(capture["occurs"]);
 
-    const { dataType, bytesSize } = this._determineDataTypeAndSize(picDef, comp);
+    const { dataType, bytesSize } = this._determineDataTypeAndSize(
+      picDef,
+      comp,
+    );
     const isGroup = picDef === null || picDef === undefined;
 
-    return new Record(
+    return new Record({
       level,
       name,
-      [], // Children will be added later
       dataType,
-      bytesSize,
+      bytes: bytesSize,
       isGroup,
       redefines,
-      occurs
-    );
+      occurs,
+    });
   }
 
   private _determineDataTypeAndSize(
     picDef: string | undefined,
-    comp: string | undefined
+    comp: string | undefined,
   ): { dataType: string | undefined; bytesSize: number } {
     if (picDef) {
       const dataType = this._assignDataType(picDef, comp);
@@ -142,7 +148,11 @@ export class CopybookParser {
 
   private _calculateNumberOfBytes(picDef: string, dataType: string): number {
     const firstChar = picDef[0];
-    const parts = picDef.replace("V", " ").replace("S", "").replace("-", "").split(" ");
+    const parts = picDef
+      .replace("V", " ")
+      .replace("S", "")
+      .replace("-", "")
+      .split(" ");
 
     function getPicSize(arg: string): number {
       if (arg.includes("(")) {

@@ -1,7 +1,5 @@
-import { commands, ExtensionContext, window, workspace } from "vscode";
+import { commands, ExtensionContext } from "vscode";
 import { TemplatePickerPanel } from "./panels/TemplatePickerPanel";
-import { getConfig } from "./utilities/getConfiguration";
-import * as vscode from "vscode";
 
 export function activate(context: ExtensionContext) {
   // window.onDidChangeActiveTextEditor(async (editor) => {

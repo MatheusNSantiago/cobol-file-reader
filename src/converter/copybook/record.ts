@@ -8,16 +8,25 @@ export class Record {
   redefines?: string;
   occurs?: number;
 
-  constructor(
-    level: string,
-    name: string,
-    children: Record[] = [],
-    dataType?: string,
-    bytes: number = 0,
-    isGroup: boolean = true,
-    redefines?: string,
-    occurs?: number
-  ) {
+  constructor({
+    level,
+    name,
+    children = [],
+    dataType,
+    bytes = 0,
+    isGroup = true,
+    redefines,
+    occurs,
+  }: {
+    level: string;
+    name: string;
+    children?: Record[];
+    dataType?: string;
+    bytes: number;
+    isGroup: boolean;
+    redefines?: string;
+    occurs?: number;
+  }) {
     this.level = level;
     this.name = name;
     this.children = children;

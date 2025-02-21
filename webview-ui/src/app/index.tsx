@@ -2,11 +2,13 @@ import {
   MantineReactTable,
   MRT_ShowHideColumnsButton,
   MRT_ToggleFiltersButton,
-  useMantineReactTable,
 } from "mantine-react-table";
-import { Box, Divider, Flex, Loader } from "@mantine/core";
-import SelectGroup from "./components/select-group";
+import { Divider, Flex } from "@mantine/core";
 import useTableDataManager from "../api/useTableDataManager";
+
+//Import Mantine React Table Translations
+import SelectGroup from "./select-group";
+import { MRT_Localization_PT_BR } from "../lib/mantine-table-localization";
 
 const FILE = "BRT.DEB.DEB307.BAIXA.SS000101";
 const COPYBOOK = "DEBK307";
@@ -14,61 +16,53 @@ const COPYBOOK = "DEBK307";
 const App = () => {
   const manager = useTableDataManager(COPYBOOK, FILE);
 
-  // Garantir que sempre existem valores padrão
-  const tableColumns = manager.data.columns;
-  const tableData = manager.data.data;
-
-  // Evitar renderização prematura enquanto carrega
-  // if (manager.isGroupsLoading || manager.isTableLoading) {
-  //   return (
-  //     <Flex justify="center" align="center" style={{ height: "100vh" }}>
-  //       <Loader size="xl" />
-  //     </Flex>
-  //   );
-  // }
-  //
-  // console.log(tableColumns);
-
   return (
-    <Flex direction="column">
-      <Flex mx={20} justify="space-between">
-        <Flex align={"center"} gap="1rem">
-          <h3>{FILE}</h3>
-          <Divider orientation="vertical" />
+    <MantineReactTable
+      columns={manager.data.columns.map((col) => ({ header: col, accessorKey: col }))}
+      data={manager.data.records}
+      renderTopToolbar={({ table }) => (
+        <Flex mx={20} justify="space-between" align={"center"}>
+          <Flex align="center" gap="1rem">
+            <h3>{FILE}</h3>
+            <Divider orientation="vertical" />
 
-          {/* Renderiza SelectGroup somente se houver grupos carregados */}
-          {manager.groups && manager.groups.length > 0 && (
-            <SelectGroup
-              groups={manager.groups}
-              selected={manager.selectedGroup ?? manager.groups[0]}
-              onChange={(group) => manager.setSelectedGroup(group)}
-            />
-          )}
+            {/* Renderiza SelectGroup somente se houver grupos carregados */}
+            {manager.groups && manager.groups.length > 0 && (
+              <SelectGroup
+                groups={manager.groups}
+                selected={manager.selectedGroup ?? manager.groups[0]}
+                onChange={(group) => manager.setSelectedGroup(group)}
+              />
+            )}
+          </Flex>
+          <Flex>
+            <MRT_ToggleFiltersButton table={table} />
+            <MRT_ShowHideColumnsButton table={table} />
+          </Flex>
         </Flex>
-
-        {/* <Box display="flex"> */}
-        {/*   <MRT_ToggleFiltersButton table={MRTable} /> */}
-        {/*   <MRT_ShowHideColumnsButton table={MRTable} /> */}
-        {/* </Box> */}
-      </Flex>
-
-      <MantineReactTable
-        columns={tableColumns}
-        data={tableData}
-        enableColumnFilterModes={true}
-        enableRowNumbers={true}
-        initialState={{ showColumnFilters: true }}
-        enableTopToolbar={false}
-        enableDensityToggle={false}
-        enableFullScreenToggle={false}
-        enableBottomToolbar={false}
-        enablePagination={false}
-        enableColumnVirtualization={true}
-        rowVirtualizerOptions={{ overscan: 10 }}
-        columnVirtualizerOptions={{ overscan: 5 }}
-        state={{ isLoading: manager.isTableLoading }}
-      />
-    </Flex>
+      )}
+      enableColumnPinning
+      enableColumnFilterModes
+      enableColumnResizing
+      enableRowNumbers
+      initialState={{
+        showColumnFilters: true,
+        pagination: { pageSize: 100, pageIndex: 0 },
+      }}
+      state={{
+        isLoading: manager.isTableLoading,
+        density: "xs",
+      }}
+      mantineTableContainerProps={{
+        style: { height: "calc(100vh - 200px)" },
+      }}
+      enableStickyHeader
+      paginationDisplayMode={"pages"}
+      mantinePaginationProps={{ showRowsPerPage: false }}
+      enableDensityToggle={false}
+      enableFullScreenToggle={false}
+      localization={MRT_Localization_PT_BR}
+    />
   );
 };
 
