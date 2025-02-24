@@ -1,5 +1,5 @@
 import { workspace } from "vscode";
-import { Configuration } from "../models/configuration.model";
+import { Configuration } from "../../models/configuration.model";
 
 export type TemplatePanelConfiguration = Configuration & {
   // apiUrl: string;

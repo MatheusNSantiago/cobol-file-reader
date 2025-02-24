@@ -11,7 +11,7 @@ export async function getGroups(
       path.join(extensionPath, "assets", "copybook", `${copybookName}.cpy`),
     );
     const groups = copybook
-      .get_root_groups()
+      .getRootGroups()
       .filter((group) => !group.isFiller() && group.children.length > 0)
       .map((group) => group.name);
     return groups;
@@ -45,7 +45,7 @@ export async function getTableData(
     const filePath = path.join(extensionPath, "assets", "files", fileName);
     const records = extractRecordsFromFile(group, filePath);
 
-    const columns = group.getLeafRecords().map((rec) => rec.name);
+    const columns = group.getLeafPictures().map((rec) => rec.name);
     const rows = records.map((rec) => columns.map((col) => rec[col]));
 
     return { columns, rows };

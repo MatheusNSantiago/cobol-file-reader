@@ -6,10 +6,10 @@ import {
   Uri,
   ViewColumn,
 } from "vscode";
-import { getUri } from "../utilities/getUri";
-import { getNonce } from "../utilities/getNonce";
+import { getUri } from "../lib/utils/getUri";
+import { getNonce } from "../lib/utils/getNonce";
 import { COMMAND, InjectConfigurationMessage } from "../models/message.model";
-import { getConfig } from "../utilities/getConfiguration";
+import { getConfig } from "../lib/utils/getConfiguration";
 import { getGroups, getTableData } from "../converter";
 
 /**

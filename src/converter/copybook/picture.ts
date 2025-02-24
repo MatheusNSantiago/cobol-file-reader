@@ -1,7 +1,7 @@
-export class Record {
+export class Picture {
   level: string;
   name: string;
-  children: Record[];
+  children: Picture[];
   dataType?: string;
   bytes: number;
   isGroup: boolean;
@@ -20,7 +20,7 @@ export class Record {
   }: {
     level: string;
     name: string;
-    children?: Record[];
+    children?: Picture[];
     dataType?: string;
     bytes: number;
     isGroup: boolean;
@@ -37,22 +37,18 @@ export class Record {
     this.occurs = occurs;
   }
 
-  toString(): string {
-    return `Record(name='${this.name}', level='${this.level}', bytes=${this.bytes}, is_group=${this.isGroup})`;
-  }
-
   isFiller(): boolean {
     return this.name === "FILLER";
   }
 
-  calculateSize(calculateChildSizeFunc: (child: Record) => number): number {
+  calculateSize(calculateChildSize: (child: Picture) => number): number {
     if (!this.isGroup) {
       return this.bytes;
     }
 
     this.bytes = 0;
     for (const child of this.children) {
-      const nbytes = calculateChildSizeFunc(child);
+      const nbytes = calculateChildSize(child);
       this.bytes += nbytes;
     }
 
@@ -60,20 +56,20 @@ export class Record {
     return this.bytes;
   }
 
-  getLeafRecords(includeFiller: boolean = false): Record[] {
-    const getLeafRecordsRecursive = (node: Record): Record[] => {
+  getLeafPictures(includeFiller: boolean = false): Picture[] {
+    const getLeafPicturesRecursive = (node: Picture): Picture[] => {
       const isN88 = node.level === "88";
       const hasChildren = node.children.length > 0;
       const isArray = node.occurs !== null && node.occurs !== undefined;
 
       if (isArray) {
-        const leafRecords: Record[] = [];
+        const leafPictures: Picture[] = [];
         for (let i = 0; i < (node.occurs || 0); i++) {
           for (const child of node.children) {
-            leafRecords.push(...getLeafRecordsRecursive(child));
+            leafPictures.push(...getLeafPicturesRecursive(child));
           }
         }
-        return leafRecords;
+        return leafPictures;
       }
 
       const isDefiningN88 = node.children.every((c) => c.level === "88");
@@ -87,13 +83,13 @@ export class Record {
         }
       }
 
-      const leafRecords: Record[] = [];
+      const leafPictures: Picture[] = [];
       for (const child of node.children) {
-        leafRecords.push(...getLeafRecordsRecursive(child));
+        leafPictures.push(...getLeafPicturesRecursive(child));
       }
-      return leafRecords;
+      return leafPictures;
     };
 
-    return getLeafRecordsRecursive(this);
+    return getLeafPicturesRecursive(this);
   }
 }

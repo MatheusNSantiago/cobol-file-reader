@@ -2,34 +2,6 @@ import * as fs from "fs";
 import path from "path/posix";
 import * as vscode from "vscode";
 
-// export namespace Zowe {
-//   const getZowe = async () => {
-//     const zoweExplorerApi = vscode.extensions.getExtension(
-//       "Zowe.vscode-extension-for-zowe",
-//     );
-//
-//     if (zoweExplorerApi?.exports) {
-//       return zoweExplorerApi.exports;
-//     }
-//     return undefined;
-//   };
-//
-//   export const getMvsApi = async () => {
-//     const zoweExplorerApi = await getZowe();
-//     if (!zoweExplorerApi) {
-//       return "Instale a extensão do Zowe em sua máquina.";
-//     }
-//     const api = zoweExplorerApi.getExplorerExtenderApi();
-//     const profile = api.getProfilesCache().loadNamedProfile("rse");
-//     const mvsApi = zoweExplorerApi.getMvsApi(profile);
-//     if (mvsApi.getSession().ISession.user === undefined) {
-//       return "Faça login no zowe.";
-//     }
-//
-//     return mvsApi;
-//   };
-// }
-
 class _Zowe {
   private api: any = null;
   private profile: any = null;

@@ -1,5 +1,5 @@
 import cptable from "codepage";
-import { Record } from "./copybook/record";
+import { Picture } from "./copybook/picture";
 import * as fs from "fs";
 
 interface RecordResult {
@@ -7,15 +7,15 @@ interface RecordResult {
 }
 
 /**
- * Extrai registros de um arquivo com base na estrutura de grupo e copybook fornecida.
+ * Extrai registros de um arquivo com base no copybook fornecido
  *
- * @param group - O registro raiz (grupo) que define a estrutura dos dados.
+ * @param groupPic - A picture raiz (grupo) que define a estrutura dos dados.
  * @param filePath - O caminho para o arquivo de onde extrair os registros.
  * @returns Um array de RecordResult, cada um representando um registro extraído do arquivo.
  * @throws Se houver um erro ao ler o arquivo.
  */
 export function extractRecordsFromFile(
-  group: Record,
+  groupPic: Picture,
   filePath: string,
 ): RecordResult[] {
   var data: Buffer;
@@ -29,33 +29,33 @@ export function extractRecordsFromFile(
   const lines: Buffer[] = [];
   let start = 0;
   while (start < data.length) {
-    const line = data.subarray(start, start + group.bytes);
+    const line = data.subarray(start, start + groupPic.bytes);
     if (line.length === 0) {
       break;
     }
     lines.push(line);
-    if (lines.length > 5_00) {
+    if (lines.length > 5_000) {
       break;
     }
-    start += group.bytes;
+    start += groupPic.bytes;
   }
 
-  const leafRecords = group.getLeafRecords(true);
-  return lines.map((line) => extractRecord(leafRecords, line));
+  const leafPictures = groupPic.getLeafPictures(true);
+  return lines.map((line) => extractPicture(leafPictures, line));
 }
 
 /**
  * Extrai um único registro de uma linha de bytes, com base nos registros folha.
  *
- * @param leafRecords - Um array de objetos Record folha que definem a estrutura do registro.
+ * @param leafPictures - Um array de leaft pictures que definem a estrutura do registro.
  * @param line - Um Buffer representando uma única linha de bytes do arquivo.
  * @returns Um objeto RecordResult representando o registro extraído.
  */
-function extractRecord(leafRecords: Record[], line: Buffer): RecordResult {
+function extractPicture(leafPictures: Picture[], line: Buffer): RecordResult {
   const result: RecordResult = {};
   let currByte = 0;
 
-  for (const child of leafRecords) {
+  for (const child of leafPictures) {
     const name = child.name;
     const offset = child.bytes;
     const isArray = child.occurs !== undefined;
@@ -63,9 +63,9 @@ function extractRecord(leafRecords: Record[], line: Buffer): RecordResult {
     if (!isArray) {
       const dataType = child.dataType;
       const bytes = line.subarray(currByte, currByte + offset);
-      const content = translateBytes(bytes, dataType);
+      const content = deserializeBytes(bytes, dataType);
 
-      if (!name.includes("FILLER")) {
+      if (!child.isFiller()) {
         result[name] = content;
       }
     }
@@ -76,9 +76,8 @@ function extractRecord(leafRecords: Record[], line: Buffer): RecordResult {
   return result;
 }
 
-function translateBytes(bytes: Buffer, dataType: string | undefined): string {
+function deserializeBytes(bytes: Buffer, dataType: string | undefined): string {
   function unpackTextAndNumber(): string {
-    // return iconv.decode(bytes, "cp037").replace(/\x00/g, "").trimEnd();
     return Buffer.from(cptable.utils.decode(37, bytes)).toString();
   }
 

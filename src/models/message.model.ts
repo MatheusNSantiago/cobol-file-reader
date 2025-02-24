@@ -10,15 +10,6 @@ export type Message = {
   data: any;
 };
 
-// addRemoteUrlMessage extends Message
-export type AddRemoteUrlMessage = Message & {
-  command: COMMAND.addRemoteUrlMessage;
-  data: {
-    remoteUrl: string;
-    stages: string[];
-  };
-};
-
 export interface InjectConfigurationMessage extends Message {
   command: COMMAND.injectConfigurationMessage;
   data: Configuration;

@@ -1,49 +1,51 @@
-import { Record } from "./record";
+import { Picture } from "./picture";
 import { CopybookParser } from "./copybook-parser";
 
 export class Copybook {
-  records: Record[];
+  pictures: Picture[];
 
-  constructor(records: Record[]) {
-    this.records = records;
-    for (const root of this.records) {
+  constructor(pictures: Picture[]) {
+    this.pictures = pictures;
+    for (const root of this.pictures) {
       root.calculateSize((child) => child.calculateSize((c) => c.bytes));
     }
   }
 
   static fromPath(path: string): Copybook {
     const copybookParser = new CopybookParser(path);
-    const records = copybookParser.extractRecords();
-    return new Copybook(records);
+    const pictures = copybookParser.extractPictures();
+    return new Copybook(pictures);
   }
 
-  getRootGroup(name: string): Record | undefined {
-    for (const record of this.get_root_groups()) {
-      if (record.name === name) {
-        return record;
+  getRootGroup(name: string): Picture | undefined {
+    for (const picture of this.getRootGroups()) {
+      if (picture.name === name) {
+        return picture;
       }
     }
     return undefined;
   }
 
-  get_root_groups(): Record[] {
-    const rootGroups: Record[] = [];
-    for (let idx = 0; idx < this.records.length; idx++) {
-      const group = this.records[idx];
+  getRootGroups(): Picture[] {
+    const rootGroups: Picture[] = [];
+    for (let idx = 0; idx < this.pictures.length; idx++) {
+      const group = this.pictures[idx];
       if (group.name === "FILLER") {
         continue;
       }
 
       if (group.redefines) {
-        const redefinedRecord = this.records.find((rec) => rec.name === group.redefines);
-        if (redefinedRecord) {
-          group.bytes = redefinedRecord.bytes;
+        const redefinedPic = this.pictures.find(
+          (rec) => rec.name === group.redefines,
+        );
+        if (redefinedPic) {
+          group.bytes = redefinedPic.bytes;
         }
       }
 
       if (!group.children.length) {
-        if (idx + 1 < this.records.length) {
-          const nextGroup = this.records[idx + 1];
+        if (idx + 1 < this.pictures.length) {
+          const nextGroup = this.pictures[idx + 1];
           if (nextGroup.isFiller() && nextGroup.redefines === group.name) {
             group.children = nextGroup.children;
           } else {
